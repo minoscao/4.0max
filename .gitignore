@@ -6,6 +6,13 @@ node_modules/
 dist/
 _docx_work/
 
+# Cloudflare Workers deploys the committed production bundle. Keeping this
+# directory in Git makes the deployment independent of dashboard build settings.
+!admin-dashboard-tester/dist/
+admin-dashboard-tester/dist/*
+!admin-dashboard-tester/dist/client/
+!admin-dashboard-tester/dist/client/**
+
 # Use pnpm-lock.yaml as the single lockfile
 admin-dashboard-tester/package-lock.json
 

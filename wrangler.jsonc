@@ -1,0 +1,9 @@
+{
+  "$schema": "https://developers.cloudflare.com/workers/wrangler/config-schema.json",
+  "name": "4-0max",
+  "compatibility_date": "2026-08-21",
+  "assets": {
+    "directory": "./admin-dashboard-tester/dist/client",
+    "not_found_handling": "single-page-application"
+  }
+}

@@ -2,6 +2,18 @@
 
 面向马来西亚及东南亚制造企业的设备维修工作流原型。系统围绕操作工报修、维修工程师接单与维修、操作工验收以及管理员分析形成可追踪闭环。
 
+## Cloudflare Workers 部署
+
+仓库根目录的 `wrangler.jsonc` 会把 `admin-dashboard-tester/dist/client` 作为线上静态资源目录，并为前端路由启用 SPA 回退。生产构建文件会一并提交到仓库，因此 Cloudflare 使用默认部署命令 `npx wrangler deploy` 即可发布，不依赖控制台里的额外构建命令。
+
+更新页面后，在本地重新生成生产文件：
+
+```powershell
+pnpm --dir admin-dashboard-tester run build
+```
+
+提交生成的 `admin-dashboard-tester/dist/client` 文件后，推送到 `main` 即会触发 Cloudflare 自动部署。
+
 ## 当前内容
 
 - 管理员端可交互测试页面
