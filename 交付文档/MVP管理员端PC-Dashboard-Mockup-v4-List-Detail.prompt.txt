@@ -1,0 +1,100 @@
+Use case: ui-mockup
+Asset type: refined desktop administrator dashboard mockup for a Malaysian factory maintenance workflow system
+Input image: the supplied annotated dashboard screenshot is the edit target and incumbent visual reference.
+
+PRIMARY REQUEST
+Redesign the loose red-annotated middle area into a compact, clearly separated “当前任务” master-detail workspace using a true List → Detail information architecture. Remove the red annotation rectangle completely from the finished image. Keep the rest of the page recognizably the same premium 2026 manufacturing workflow software, but tighten spacing and alignment across the entire dashboard so it feels focused rather than scattered.
+
+LAYOUT THESIS
+Primary task path: manager scans the current-task list, selects one task, understands its detail, then takes one clear action.
+Group together: live task list + selected task detail.
+Separate: top shift metrics above; supporting analytics below.
+The “当前任务” workspace must dominate the page and read as one continuous operational surface, not a horizontal kanban and not a collection of isolated cards.
+Use a 12-column desktop grid. Inside the workspace: left list about 38%, right detail about 62%, divided by a single subtle vertical rule. Height approximately 380px. Strong alignment and compact 8/12/16/24/32px rhythm.
+
+KEEP THESE GLOBAL ELEMENTS
+- Dark mineral-navy left sidebar with M4 and consistent 1.5px line icons: 总览 selected, 维修工单, 设备, 维修人员, 班次, 分析, 故障分类, 设置.
+- Top utility bar: Kilang 2 · 早班 · 07:00–19:00; role switch 管理员 selected / 操作工 / 维修工程师; BM / 中文 / EN; search; notification; Nadia.
+- Page header 班次控制台, subtitle 8月21日 · 当前班次, button 导出周报.
+- Compact top metric strip: 运行设备 28 / 32, 待处理 6, 平均响应 8分钟, 今日停机 2小时18分. Keep each metric with a coherent semantic line icon. Tighten vertical whitespace.
+- Bottom analytics may remain: 停机组成 and 工程师状态, but visually quieter and more compact than the current-task workspace.
+
+CURRENT TASK MASTER-DETAIL WORKSPACE
+Create a clearly distinguished continuous white/very-light-porcelain surface with a subtle 1px blue-gray border, restrained 12px radius, and a very soft directional shadow. It should feel like the active application workspace. Do not use a thick colored edge.
+Workspace header:
+- wrench/checklist line icon
+- title 当前任务
+- count 6
+- compact segmented filters: 全部, 待响应 2, 维修中 2, 待验收 1
+- small search/filter icon control at far right
+The workspace header is one compact row with a bottom divider.
+
+LEFT MASTER LIST
+Show compact rows, not separate floating cards. Each row has equipment icon, machine code + fault name, status/timer, optional technician. Use separators and comfortable 52–64px row height.
+Selected first row gets a pale warm-orange background tint, a 1px orange keyline or small selection indicator no thicker than 1px, and strong text:
+- M-12 · 冲压机
+- 响应超时 · 已等待 24 分钟
+- 未分配
+Second row:
+- M-03 · 电机故障
+- 维修中 · 18 分钟
+- avatar Azlan
+Third row:
+- M-08 · 传感器异常
+- 待验收
+- avatar Mei Ling
+Fourth compact row:
+- M-21 · 液压压力异常
+- 已接单 · 6 分钟
+- Kumar
+At the bottom, a subtle text action 查看全部任务 with arrow icon.
+Task urgency is communicated by icon + words + restrained color, never color alone.
+
+RIGHT DETAIL PANE — SELECTED M-12
+Header region:
+- machine line icon in a small restrained square
+- M-12 冲压机
+- status badge 响应超时
+- short metadata 2号产线 · 工位 A-04
+- kebab action menu icon, but do not rely on icon only for primary tasks
+Critical timer area on upper right:
+- 等待响应
+- 24分钟
+- small caption 目标 ≤ 10分钟
+Use orange only for the timer and alert icon, not a large orange block.
+
+Details in a simple two-column definition layout, no nested cards:
+- 故障类型: 无法启动
+- 报修人: Lim Wei
+- 报修时间: 10:24
+- 当前负责人: 未分配
+Every field label may use a subtle semantic icon from the same icon family.
+
+Compact four-step status timeline:
+报修 10:24 ✓ → 等待接单 当前 → 维修 → 验收
+This is a thin, small workflow indicator inside the detail, not the dominant horizontal kanban. Current step is orange and includes the text 当前; completed step uses navy/check; future steps muted gray.
+
+Bottom action bar within detail:
+- Primary burnt-orange solid button with user-plus icon: 指派工程师
+- Secondary outlined button with device icon: 查看设备
+- Quiet text action with history icon: 查看维修记录
+Keep one unmistakable primary action.
+
+REMOVE / MERGE DUPLICATION
+- Remove the old large horizontal “实时工单流” four-column workflow.
+- Remove the separate “优先处理” sidebar because urgency is now ordered and highlighted in the task list.
+- Do not repeat M-12 in multiple places outside the selected list row and its detail pane.
+- Do not show the red annotation frame.
+
+VISUAL HIERARCHY AND ICONS
+All navigation, metric, section, row, field, status, timeline and action icons use one coherent modern 1.5px outline family. No emoji, clipart or mismatched illustration styles.
+Hierarchy:
+1. current task master-detail workspace and selected M-12 action
+2. top health metrics
+3. lower analytics
+Use typography, spacing, continuous surfaces and dividers rather than many rounded cards.
+Make the page pass a squint test: the eye lands first on “当前任务”, then selected M-12 detail and orange primary action, then metrics, then charts.
+
+STYLE
+2026 premium Southeast Asian advanced-manufacturing workflow software: quiet confidence, warm international enterprise character, mineral navy, porcelain white, graphite, restrained burnt orange, rainforest green. Crisp modern Chinese-supporting sans-serif, tabular numbers, excellent contrast. Dense but calm. Nearly flat with very subtle depth. No gradients, glassmorphism, neon, retro factory dashboard, giant headings, decorative charts, excessive pills, chunky card grid, thick colored side borders, or empty unused space.
+All visible Chinese copy listed above should be legible and spelled exactly. Preserve the original landscape desktop perspective and pixel-sharp application screenshot quality.

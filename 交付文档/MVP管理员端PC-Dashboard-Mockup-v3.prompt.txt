@@ -1,0 +1,77 @@
+Edit the referenced admin dashboard mockup into a substantially improved V3 desktop web dashboard for a 2026 industrial workflow SaaS used by premium advanced-manufacturing companies in Malaysia and Southeast Asia.
+
+PRESERVE THE GOOD FOUNDATION
+- Keep the calm premium control-console character, cool porcelain background, mineral navy/graphite navigation, restrained burnt-orange alerts, rainforest/electric-lime success accents, crisp dark typography, thin dividers, generous breathing room.
+- Keep the compact left navigation, top utility bar, role switcher and multilingual cues.
+- Maintain a believable 1440x1024 desktop application screenshot, front-on, pixel-sharp, no browser chrome, no device frame.
+- Southeast Asian premium manufacturing character should feel international and sophisticated through color, material and operational clarity; do not use flags, batik motifs, ethnic decoration, tourist imagery, stereotypes or retro factory aesthetics.
+
+MAJOR UX UPGRADE: MAKE IT A REAL WORKFLOW CONTROL CONSOLE
+Replace the static report-like center with an operational “实时工单流” workflow surface showing four connected stages from left to right:
+1. 待响应 2
+2. 已接单 1
+3. 维修中 2
+4. 待验收 1
+Use a refined horizontal workflow track with thin directional connectors and compact work-order items aligned to stages. Make the state change unmistakable but visually calm. Show three representative live work orders:
+- M-12 冲压机 · 等待24分钟 · 未分配
+- M-03 电机故障 · Azlan · 维修18分钟
+- M-08 传感器异常 · Mei Ling · 等待验收
+Each item must have a small coherent icon, equipment code, concise fault text, assigned person/avatar where relevant, and one timer/status. Avoid dense cards and excessive descriptions.
+
+INFORMATION ARCHITECTURE AND COPY
+Left navigation, every item with a matching 1.5px outline icon:
+- 总览 (selected)
+- 维修工单
+- 设备
+- 维修人员
+- 班次
+- 分析
+- 故障分类
+- 设置
+Top utility:
+- M4 wordmark
+- Kilang 2 · 早班 · 07:00–19:00
+- role switch: 管理员 selected, 操作工, 维修工程师
+- language: BM 中文 EN
+- search: 搜索设备、工单或人员
+- notification bell and avatar Nadia
+Page header:
+- 班次控制台
+- 8月21日 · 当前班次
+- primary button 导出周报 with download icon
+
+TOP METRIC STRIP, NOT FOUR CARDS
+Use one continuous horizontal strip divided by fine vertical rules. Every metric has one small semantic line icon and clear label/value hierarchy:
+- 运行设备 28 / 32
+- 待处理 6
+- 平均响应 8分钟
+- 今日停机 2小时18分
+Make values prominent but not billboard-sized.
+
+RIGHT PRIORITY ACTION PANEL
+A clearly secondary but actionable column titled “优先处理” with alert icon. Three concise exceptions:
+- M-12 响应超时 — button 指派
+- M-03 疑似返修 — button 查看
+- M-08 本周第5次故障 — button 检查
+Use compact text buttons with icons. Only the first critical action uses burnt orange. No red wall of alerts.
+
+BOTTOM ANALYTICS, ONLY MEANINGFUL VISUALS
+Left: “停机组成” with clock icon, a clean stacked horizontal bar comparison for M-03, M-08, M-12. Legend uses 等待 and 维修. Waiting in warm orange, repair in mineral navy. Include restrained exact time labels. No sparklines, pie rings, fake 3D or decorative charts.
+Right: “工程师状态” with people/tool icon. Show three compact rows with avatar or icon, name, state and a single capacity bar:
+- Azlan · 维修中 · 78%
+- Mei Ling · 可接单 · 34%
+- Kumar · 休息中
+Use green only for available/success, navy for active, muted gray for rest.
+
+ICON SYSTEM AND HIERARCHY
+Every navigation item, section title, workflow stage, metric, action, chart legend where appropriate, and control must have a coherent modern 1.5px outline icon from the same family. No emoji, no clip-art, no oversized illustrated KPI icons. Primary icons can use one accent color, secondary icons are graphite/navy, tertiary icons muted gray. Icons support scanning but never compete with data.
+Create three obvious hierarchy levels:
+1. primary operational surface: live workflow and critical first action
+2. secondary status: metrics and exception list
+3. tertiary analysis: downtime composition and technician capacity
+Use typography size, weight, spacing and color—not a grid of equal rounded cards—to create hierarchy.
+
+VISUAL STYLE
+2026 enterprise workflow software: precise, calm, tactile, premium, efficient. Think modern aviation operations console meets high-end manufacturing OS, but warmer and more human. Continuous surfaces, subtle 1px borders, restrained 10–12px corner radii only for interactive/status elements. Plenty of aligned whitespace. Dense enough for a manager, simple enough to scan in five seconds. Use a crisp modern sans serif supporting Chinese. Nearly no gradients and no glassmorphism. Minimal shadow only to anchor the one active workflow surface.
+Avoid: generic admin template, chunky card grid, retro control room, 1980s state-enterprise aesthetic, sci-fi neon, excessive rounding, giant page title, many badges, icon-only actions, tiny unreadable text, decorative charts, stock illustrations.
+All quoted interface copy must be legible and spelled exactly as provided. Ensure layout implies responsive behavior: collapsible sidebar, modular columns that can stack on tablet, but show the polished PC view only.

@@ -1,0 +1,95 @@
+Use case: ui-mockup
+Asset type: premium responsive desktop web dashboard mockup for an Industrial 4.0 maintenance administrator in Malaysia
+Primary request: Create a completely new visual direction for the administrator dashboard. It must look like a sophisticated contemporary operations control console used by a premium airport or logistics network, not a generic Chinese government-enterprise dashboard, not a traditional ERP, and not a colorful data wall.
+
+Design thesis: maintenance calls are live operational movements on one shared timeline, not isolated statistic cards. The interface should feel precise, calm, expensive, internationally credible, and product-specific.
+
+Scene and users: Malaysian factory maintenance manager using a large PC display during a 12-hour shift. The interface must remain practical and readable under normal factory office lighting.
+
+Style/medium: shippable high-end product UI, sharp editorial composition, modern neo-grotesk Chinese typography, tabular numerals, refined hairline dividers, disciplined spacing. Predominantly flat surfaces with depth only where function requires it. No illustrations and no decorative dashboard icons.
+
+Color system:
+- cool porcelain background, not warm beige
+- graphite black ink
+- mineral navy as the structural color
+- one electric lime accent only for healthy/available state
+- one burnt orange accent only for actions and operational exceptions
+- no large teal sidebar
+- no primary blue gradient
+- no red alarm wall
+
+Composition, 16:9 full browser viewport, no device frame:
+- A very narrow 72px graphite navigation rail on the far left with refined line icons; a slim adjacent text menu column on porcelain ground, not a colored block.
+- A quiet top utility bar with factory/shift context, role switch, language selector, notifications, and avatar.
+- Main canvas is one continuous editorial field divided by hairlines, not a collection of rounded cards.
+- Page header on the left: “管理总览” and one small contextual line.
+- Top metrics appear as one horizontal instrument strip separated by vertical rules, never as four cards.
+- Main hero area is asymmetrical: left 40% is an operational exception queue; right 60% is a large horizontal downtime timeline covering the shift.
+- Bottom area is split into a flat machine-risk ledger and a technician-capacity strip. No boxed card shadows.
+- Use small 6–10px corner radii only where controls need them. Pills only for status tags and compact role/language switches.
+
+Navigation texts, verbatim:
+Brand mark: “M4”
+Menu:
+“总览”
+“维修工单”
+“设备”
+“维修人员”
+“班次”
+“分析”
+“故障分类”
+“设置”
+Selected menu: “总览”
+
+Top utility bar:
+“Kilang 2 · 早班 · 07:00–19:00”
+Role switch: “管理员” “操作工” “维修工程师”
+Selected role: “管理员”
+Language: “BM  中文  EN”
+Avatar name: “Nadia”
+
+Page header:
+“管理总览”
+“8月21日 · 当前班次”
+Small action button: “导出周报”
+
+Instrument strip, exact labels and values:
+“运行设备” “28 / 32”
+“待处理” “6”
+“平均响应” “8分钟”
+“今日停机” “2小时18分”
+
+Exception queue:
+Title: “现在需要处理”
+Large count: “3”
+Rows:
+“P1  M-12” “等待24分钟” action “打开工单”
+“P1  M-03” “15分钟内再次故障” action “查看返修”
+“P2  M-08” “本周第5次故障” action “查看设备”
+
+Timeline:
+Title: “今日停机时间线”
+Time labels: “07:00” “09:00” “11:00” “13:00” “15:00” “17:00” “19:00”
+Machine lanes: “M-03” “M-08” “M-12”
+Legend: “等待” “维修” “已恢复”
+Show clear horizontal duration segments, with waiting in muted gray, repair in mineral navy, restored markers in lime, and the current critical segment in burnt orange. No decorative chart grid.
+
+Bottom left:
+Title: “设备风险”
+Columns: “设备” “风险信号” “本周停机” “趋势”
+Rows:
+“M-08” “5次故障” “3小时40分” “上升”
+“M-03” “疑似返修” “1小时12分” “持平”
+“M-12” “响应过慢” “46分” “上升”
+
+Bottom right:
+Title: “工程师负载”
+Rows:
+“Azlan” “维修中” “78%”
+“Mei Ling” “可接单” “34%”
+“Kumar” “休息中” “—”
+Use thin horizontal capacity bars, not circular progress rings.
+
+Responsive intent: modular 12-column system; on tablet the text menu collapses and the hero becomes two stacked regions; on mobile the timeline becomes a vertical event list and ledger rows become stacked summaries; no hover-only controls; no content hidden by breakpoint. Do not show responsive annotations in the mockup.
+
+Constraints: simplified Chinese must be accurate; quoted interface text must be verbatim; no giant title; no big icon KPI cards; no thick borders; no drop-shadow card grid; no glassmorphism; no gradients; no retro sci-fi; no neon; no monospace costume; no teal government sidebar; no red alert boxes; no stock dashboard template; no logo beyond the simple “M4” mark; no watermark; no extra menu items; no extra charts; no tiny unreadable text. The result must look authored by a top international product design studio.
