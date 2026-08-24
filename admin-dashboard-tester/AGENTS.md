@@ -10,7 +10,9 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 
 ## Confirmed Product Decisions
 
-- Use the V4 administrator dashboard mockup in `../交付文档/MVP管理员端PC-Dashboard-Mockup-v4-List-Detail.png` as the visual source of truth.
+- Use `../交付文档/M4-维修异常中心-优化概念图-v1.png` as the current visual source of truth for the administrator landing view. The older V4 dashboard remains the source for the general work-order view.
 - The primary workspace is a compact List → Detail experience: current tasks on the left, selected task detail and action on the right.
 - Current tasks must be clearly separated from summary metrics and supporting analytics.
+- The administrator should land in an exception center that prioritizes unclaimed, repair-overdue, acceptance-overdue, and suspected-repeat faults.
+- Visible evidence, SLA state, correct pending-step language, and recent equipment maintenance history are higher priority than adding more dashboard charts.
 - Keep the interface simple, multilingual-ready, icon-led, responsive, and suitable for Malaysian advanced-manufacturing teams.

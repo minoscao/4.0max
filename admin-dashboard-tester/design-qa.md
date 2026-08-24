@@ -1,56 +1,45 @@
 # Design QA
 
-## Comparison Target
+## Comparison target
 
-- Source visual truth: `E:\codex\4.0工厂\交付文档\MVP管理员端PC-Dashboard-Mockup-v4-List-Detail.png`
-- Desktop implementation capture: `E:\codex\4.0工厂\admin-dashboard-tester\qa-desktop.png`
-- Mobile implementation capture: `E:\codex\4.0工厂\admin-dashboard-tester\qa-mobile.png`
-- Full-view comparison: `E:\codex\4.0工厂\admin-dashboard-tester\qa-comparison-full.png`
-- Focused task-workspace comparison: `E:\codex\4.0工厂\admin-dashboard-tester\qa-comparison-task-workspace.png`
-- Desktop viewport and captures: 1536 × 1024 CSS px, device scale factor 1, source and implementation both compared at 1536 × 1024 pixels.
-- Mobile viewport: 390 × 844 CSS px, device scale factor 1; full-page capture is 390 × 1883 pixels.
-- State: administrator dashboard, “全部” filter active, M-12 selected, no assignment panel open.
+- Source visual truth: `E:\codex\4.0工厂\交付文档\M4-维修异常中心-优化概念图-v1.png`
+- Desktop implementation: `E:\codex\4.0工厂\admin-dashboard-tester\qa-exception-desktop-final.png`
+- Side-by-side comparison: `E:\codex\4.0工厂\admin-dashboard-tester\qa-comparison-exception-final.png`
+- Mobile implementation: `E:\codex\4.0工厂\admin-dashboard-tester\qa-exception-mobile.png`
+- Desktop viewport: 1487 × 1058 CSS px. Mobile viewport: 390 × 844 CSS px.
+- State: administrator → exception center → all exceptions → M-12 selected.
 
-## Full-View Comparison Evidence
+## Visual fidelity
 
-The implementation preserves the source hierarchy and composition: mineral-navy navigation, compact shift header, continuous metric strip, dominant current-task List → Detail workspace, and quieter supporting analytics. The implementation intentionally uses slightly tighter typography and vertical spacing so the working page remains compact at 1440–1536px widths. The live tester exposes four loaded mock tasks, so its current-task count is 4 rather than the broader source concept count of 6.
+- Hierarchy matches the selected concept: navy portal navigation, quiet utility header, four intervention metrics, left exception queue, and right decision detail.
+- The M-12 detail keeps the reference anatomy: exception/SLA context, machine facts, two evidence images, correct progress timeline, intervention warning, primary fallback assignment, secondary equipment record, and two recent maintenance records.
+- Existing project typography, colors, spacing tokens, Phosphor icon family, and responsive patterns were retained. No placeholder boxes, emoji, CSS-drawn icons, or screenshot crops are used as product assets.
+- At 1487 × 1058 the primary actions remain visible without horizontal overflow. At 390 × 844 the metrics become a 2 × 2 grid, the exception queue stacks above detail, and role navigation stays available as the bottom bar.
 
-## Focused Comparison Evidence
+## Interaction verification
 
-The focused comparison confirms the master list remains the left-hand scanning surface and the selected M-12 detail remains the right-hand decision surface. Selection tint, urgency orange, equipment/fault metadata, four-step progress, and the single dominant “指派工程师” action match the source anatomy. Icons come from one Phosphor outline family and technician avatars are project-local raster assets.
+- Exception metrics show 4 total, 1 unclaimed, 2 repair-overdue, and 1 acceptance-overdue.
+- Repair-overdue filtering returns two matching work orders.
+- Administrator fallback assignment expands three real technician choices.
+- Technician M-12 flow verified: claim → start repair → enter cause and repair note → hand over for acceptance.
+- Operator current-work view exposes both “still has a problem” and “machine works” actions; accepting closes the order.
+- Reset restores the four seeded exceptions and final preview state.
+- Sites packaging tests: 4 passed, 0 failed.
 
-## Required Fidelity Surfaces
-
-- Fonts and typography: Aptos / Segoe UI Variable with Chinese-capable fallbacks. Weight, hierarchy, tabular numerals, truncation and line height remain legible at desktop and mobile. No actionable mismatch.
-- Spacing and layout rhythm: 12px operational surface radius, continuous dividers, compact 8/12/16/24px rhythm, and clear primary/secondary separation. Desktop and mobile have no horizontal viewport overflow.
-- Colors and visual tokens: mineral navy, porcelain canvas, graphite text, restrained burnt orange, green and operational blue map consistently to the source.
-- Image quality and asset fidelity: three generated technician headshots are saved locally and rendered with correct circular crops. No placeholder, emoji, handcrafted SVG or CSS-drawn icon assets are used.
-- Copy and content: the source workflow labels and task details are preserved. Loaded task counts truthfully reflect the interactive mock dataset.
-
-## Interaction Verification
-
-- Selecting M-03 updates the detail heading to “M-03 电机故障”.
-- Filtering to “维修中” reduces the list to one item and automatically keeps detail selection synchronized with M-03.
-- Opening “指派工程师” shows the assignment choices.
-- Assigning M-12 to Mei Ling updates the current owner and shows the success status “已将 M-12 指派给 Mei Ling”.
-- Desktop and mobile navigation states render; the mobile bottom navigation is visible at 390px.
-- Browser console errors and warnings: none.
-
-## Comparison History
+## Iteration history
 
 ### Pass 1
 
-- P2: Chinese language selector wrapped vertically at 1440px. Fixed with a no-wrap language group.
-- P2: task filters were cramped inside the master pane. Fixed by moving the current-task toolbar across the full List → Detail workspace.
-- P2: filtering could hide the selected list item while leaving its old detail visible. Fixed by synchronizing selection to the first visible filtered task and adding a no-results detail state.
+- P0: an incomplete acceptance step was described as completed. Fixed timeline copy so the first missing step reads “等待接单 / 当前”.
+- P0: operator acceptance controls existed only on the quick-report landing page. Added them to the operator current-work detail so the main workflow can close.
+- P1: the first implementation stacked evidence and history vertically, pushing intervention actions below the desktop fold. Rebuilt the detail as evidence/timeline plus a compact recent-history column.
+- P1: seeded exception metrics did not match the selected concept. Added an overlapping repeat-fault/repair-overdue case so the metric strip reads 4 / 1 / 2 / 1 while the queue still identifies the repeat fault.
+- P2: the selected metric used a heavy filled state not present in the concept. Replaced it with a quiet porcelain state and orange underline.
 
 ### Pass 2
 
-- Post-fix desktop and mobile captures show no horizontal overflow, no clipped controls and no remaining P0/P1/P2 findings.
-- Mechanical design scan: clean, with no reported findings.
-
-## Follow-up Polish
-
-- P3: The exact Chinese glyph rendering can vary slightly by operating-system font availability; this does not alter hierarchy or layout.
+- Side-by-side comparison confirms the final desktop implementation preserves the source layout, density, hierarchy, and visible actions.
+- Mobile scan confirms `document.body.scrollWidth` stays within the viewport and the critical bottom navigation remains fixed.
+- No remaining P0, P1, or P2 findings.
 
 final result: passed
