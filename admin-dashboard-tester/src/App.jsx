@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   Bell, Camera, CaretRight, Check, CheckCircle, ClipboardText, Clock, Cube,
-  Factory, Gear, ListChecks, MapPin, PaperPlaneTilt, Play, QrCode, Scan,
+  Factory, Gear, ListChecks, MagnifyingGlass, MapPin, PaperPlaneTilt, Play, QrCode, Scan,
   ShieldCheck, Timer, User, UserPlus, UsersThree, WarningCircle, Wrench, XCircle,
 } from "@phosphor-icons/react";
 import { copy } from "./i18n.js";
@@ -37,11 +37,27 @@ function statusKey(status){return {reported:"statusReported",assigned:"statusAss
 function StatusIcon({status,size=18}){if(status==="reported")return <WarningCircle size={size}/>;if(status==="assigned")return <UserPlus size={size}/>;if(status==="repairing")return <Wrench size={size}/>;return <CheckCircle size={size}/>;}
 function StatusBadge({task,t}){return <span className={`status-badge ${task.status}`}><StatusIcon status={task.status} size={16}/>{t(statusKey(task.status))}</span>;}
 
-function Header({role,setRole,lang,setLang,t}){
+function GlobalOrderSearch({tasks,role,t,onNavigate}){
+  const [query,setQuery]=useState("");
+  const [scope,setScope]=useState("all");
+  const [open,setOpen]=useState(false);
+  useEffect(()=>{setQuery("");setScope("all");setOpen(false);},[role]);
+  const visible=tasks.filter(task=>role==="admin"||(role==="operator"?task.reporter==="Lim Wei":task.status==="reported"||task.assignee==="Azlan"));
+  const results=visible.filter(task=>{
+    const scopeMatch=scope==="all"||(scope==="history"&&task.status==="closed")||(scope==="available"&&task.status==="reported")||(scope==="progress"&&["assigned","repairing","acceptance"].includes(task.status));
+    const haystack=`${task.id} ${task.machineId} ${t(task.machineKey)} ${t(task.issueKey)} ${task.reporter} ${task.assignee||""}`.toLowerCase();
+    return scopeMatch&&haystack.includes(query.trim().toLowerCase());
+  }).slice(0,6);
+  const filters=[["all","searchAll"],["history","searchHistory"],["available","searchAvailable"],["progress","searchInProgress"]];
+  return <div className={`global-order-search ${open?"open":""}`}><div className="search-input"><MagnifyingGlass size={18}/><input value={query} onFocus={()=>setOpen(true)} onChange={event=>{setQuery(event.target.value);setOpen(true);}} placeholder={t("searchPlaceholder")} aria-label={t("searchPlaceholder")}/>{query&&<button aria-label="Clear" onClick={()=>setQuery("")}><XCircle size={17}/></button>}</div>{open&&<div className="search-popover"><div className="search-scopes">{filters.map(([key,label])=><button key={key} className={scope===key?"active":""} onClick={()=>setScope(key)}>{t(label)}<span>{visible.filter(task=>key==="all"||(key==="history"&&task.status==="closed")||(key==="available"&&task.status==="reported")||(key==="progress"&&["assigned","repairing","acceptance"].includes(task.status))).length}</span></button>)}</div><div className="search-result-head"><strong>{t("searchResults")}</strong><button onClick={()=>setOpen(false)}>×</button></div><div className="search-results">{results.length?results.map(task=><button key={task.id} onClick={()=>{onNavigate(task);setOpen(false);}}><span className={`status-symbol ${task.status}`}><StatusIcon status={task.status} size={18}/></span><span><strong>{task.machineId} · {t(task.machineKey)}</strong><small>{task.id} · {t(task.issueKey)}</small></span><StatusBadge task={task} t={t}/><CaretRight size={16}/></button>):<div className="search-empty"><MagnifyingGlass size={22}/>{t("noSearchResults")}</div>}</div></div>}</div>;
+}
+
+function Header({role,setRole,lang,setLang,t,tasks,onSearchNavigate}){
   const profile=role==="admin"?"Nadia":role==="operator"?"Lim Wei":"Azlan";
   return <header className="topbar">
     <div className="factory-context"><strong>M4</strong><span>{t("factory")}</span><i/><span>{t("shift")}</span><i/><span>07:00–19:00</span></div>
     <div className="role-switch">{[["admin","roleAdmin"],["operator","roleOperator"],["technician","roleTechnician"]].map(([key,label])=><button key={key} className={role===key?"active":""} onClick={()=>setRole(key)}>{t(label)}</button>)}</div>
+    <GlobalOrderSearch tasks={tasks} role={role} t={t} onNavigate={onSearchNavigate}/>
     <div className="topbar-actions"><div className="languages">{[["bm","BM"],["zh","中文"],["en","EN"]].map(([key,label])=><button key={key} className={lang===key?"active":""} onClick={()=>setLang(key)}>{label}</button>)}</div><button className="icon-button notification" aria-label="Notifications"><Bell size={20}/><span/></button><div className="profile"><span>{profile[0]}</span><b>{profile}</b></div></div>
   </header>;
 }
@@ -79,18 +95,20 @@ function PortalSidebar({role,section,setSection,setRole,t}){
   return <aside className="role-sidebar"><div className="portal-name"><span className="portal-mark">M4</span><strong>{t(config.title)}</strong></div><small className="nav-caption">{t("workGroup")}</small><nav>{config.items.map(([key,label,Icon])=><button key={key} className={section===key?"active":""} onClick={()=>setSection(key)}><Icon size={21}/><span>{t(label)}</span></button>)}</nav><div className="sidebar-role-switch"><small>{t("roleGroup")}</small>{[["admin","roleAdmin"],["operator","roleOperator"],["technician","roleTechnician"]].map(([key,label])=><button key={key} className={role===key?"active":""} onClick={()=>setRole(key)}><User size={17}/><span>{t(label)}</span></button>)}<p>{t("factory")} · 07:00–19:00</p></div></aside>;
 }
 
-function WorkerOrdersPage({items,title,t,lang,now,emptyHint}){
-  const [selectedId,setSelectedId]=useState(items[0]?.id);
+function WorkerOrdersPage({items,title,t,lang,now,emptyHint,focusTaskId}){
+  const [selectedId,setSelectedId]=useState(focusTaskId||items[0]?.id);
   const selected=items.find(task=>task.id===selectedId)||items[0];
   useEffect(()=>{if(items.length&&!items.some(task=>task.id===selectedId))setSelectedId(items[0].id);},[items,selectedId]);
+  useEffect(()=>{if(focusTaskId&&items.some(task=>task.id===focusTaskId))setSelectedId(focusTaskId);},[focusTaskId,items]);
   return <main className="simple-page worker-orders-page"><PageHeading title={title} sub={t("adminSub")}/><section className="workspace"><div className="workspace-head"><div><ClipboardText size={22}/><h2>{title}</h2><span>{items.length}</span></div></div><div className="workspace-grid"><TaskList tasks={items} selectedId={selected?.id} onSelect={setSelectedId} t={t} lang={lang} now={now} emptyHint={emptyHint}/><TaskDetail task={selected} now={now} t={t} lang={lang} showFallback={false}/></div></section></main>;
 }
 
-function AdminApp({tasks,setTasks,now,t,lang,notify,setLang,section,setSection,setRole}){
+function AdminApp({tasks,setTasks,now,t,lang,notify,setLang,section,setSection,setRole,focusTaskId}){
   const [filter,setFilter]=useState("open");
   const filtered=useMemo(()=>tasks.filter(task=>filter==="all"||(filter==="open"?task.status!=="closed":task.status==="closed")),[tasks,filter]);
   const [selectedId,setSelectedId]=useState(filtered[0]?.id);const selected=filtered.find(x=>x.id===selectedId)||filtered[0];
   useEffect(()=>{if(filtered.length&&!filtered.some(x=>x.id===selectedId))setSelectedId(filtered[0].id);},[filtered,selectedId]);
+  useEffect(()=>{if(focusTaskId&&filtered.some(task=>task.id===focusTaskId))setSelectedId(focusTaskId);},[focusTaskId,filtered]);
   const fallback=(id,tech)=>{setTasks(current=>current.map(task=>task.id===id&&task.status==="reported"?{...task,status:"assigned",assignee:tech.name,avatar:tech.avatar,acceptedAt:Date.now(),assignedByAdmin:true}:task));notify(`${t("assignedTo")} ${tech.name}`);};
   const metrics=[["activeOrders",tasks.filter(x=>x.status!=="closed").length,ClipboardText],["waitingClaim",tasks.filter(x=>x.status==="reported").length,Clock],["repairing",tasks.filter(x=>["assigned","repairing"].includes(x.status)).length,Wrench],["waitingAccept",tasks.filter(x=>x.status==="acceptance").length,CheckCircle]];
   return <div className="role-layout"><PortalSidebar role="admin" section={section} setSection={setSection} setRole={setRole} t={t}/><main className="role-main">
@@ -99,14 +117,14 @@ function AdminApp({tasks,setTasks,now,t,lang,notify,setLang,section,setSection,s
 }
 
 function PhotoInput({label,hint,value,onChange,t}){const read=file=>{if(!file||!file.type.startsWith("image/"))return;const reader=new FileReader();reader.onload=()=>onChange(reader.result);reader.readAsDataURL(file);};return <label className={`photo-input ${value?"has-photo":""}`}><input type="file" accept="image/*" capture="environment" onChange={e=>read(e.target.files?.[0])}/>{value?<img src={value} alt={t("photoUploaded")}/>:<Camera size={28}/>}<span><strong>{label}</strong><small>{value?t("photoUploaded"):hint}</small></span></label>;}
-function OperatorApp({tasks,setTasks,now,t,lang,notify,section,setLang}){
+function OperatorApp({tasks,setTasks,now,t,lang,notify,section,setLang,focusTaskId}){
   const [machine,setMachine]=useState(null),[fault,setFault]=useState(""),[photo,setPhoto]=useState(""),[note,setNote]=useState("");
   const mine=tasks.filter(x=>x.reporter==="Lim Wei").sort((a,b)=>b.reportedAt-a.reportedAt);
   const submit=()=>{if(!machine||!fault)return notify(t("requiredFault"));if(!photo)return notify(t("requiredPhoto"));const created={id:`WO-${Date.now().toString().slice(-8)}`,machineId:machine.id,machineKey:machine.nameKey,issueKey:fault,status:"reported",reporter:"Lim Wei",location:`${machine.line} · ${machine.station}`,reportedAt:Date.now(),photo,note};setTasks(current=>[created,...current]);setMachine(null);setFault("");setPhoto("");setNote("");notify(t("reportSuccess"));};
   const close=id=>{setTasks(current=>current.map(task=>task.id===id&&task.status==="acceptance"?{...task,status:"closed",closedAt:Date.now()}:task));notify(t("closedSuccess"));};
   const rework=id=>{setTasks(current=>current.map(task=>task.id===id&&task.status==="acceptance"?{...task,status:"repairing",repairStartedAt:Date.now(),repairCompletedAt:null,closedAt:null}:task));notify(t("reworkSuccess"));};
-  if(section==="current")return <WorkerOrdersPage items={mine.filter(task=>task.status!=="closed")} title={t("currentTitle")} t={t} lang={lang} now={now}/>;
-  if(section==="history")return <WorkerOrdersPage items={mine.filter(task=>task.status==="closed")} title={t("historyTitle")} t={t} lang={lang} now={now} emptyHint={t("emptyHistory")}/>;
+  if(section==="current")return <WorkerOrdersPage items={mine.filter(task=>task.status!=="closed")} title={t("currentTitle")} t={t} lang={lang} now={now} focusTaskId={focusTaskId}/>;
+  if(section==="history")return <WorkerOrdersPage items={mine.filter(task=>task.status==="closed")} title={t("historyTitle")} t={t} lang={lang} now={now} emptyHint={t("emptyHistory")} focusTaskId={focusTaskId}/>;
   if(section==="equipment")return <EquipmentView tasks={tasks} t={t}/>;
   if(section==="settings")return <Settings t={t} lang={lang} setLang={setLang}/>;
   return <main className="worker-page"><div className="worker-heading"><span className="role-icon"><Scan size={28}/></span><div><h1>{t("operatorTitle")}</h1><p>{t("operatorSub")}</p></div></div><div className="worker-grid"><section className="report-panel">
@@ -114,13 +132,14 @@ function OperatorApp({tasks,setTasks,now,t,lang,notify,section,setLang}){
   </section><section className="my-orders"><header><h2>{t("myOrders")}</h2><span>{mine.length}</span></header>{mine.map(task=><article key={task.id}><div className="order-summary"><span className={`status-symbol ${task.status}`}><StatusIcon status={task.status} size={20}/></span><div><strong>{task.machineId} · {t(task.machineKey)}</strong><small>{task.id} · {duration(task.reportedAt,task.closedAt||now,lang)}</small></div><StatusBadge task={task} t={t}/></div>{task.status==="acceptance"&&<div className="acceptance-box"><p>{t("acceptanceHint")}</p>{task.result&&<blockquote>{task.result.note}</blockquote>}<div><button className="reject-button" onClick={()=>rework(task.id)}><XCircle size={19}/>{t("rejectResult")}</button><button className="accept-button" onClick={()=>close(task.id)}><CheckCircle size={19}/>{t("acceptResult")}</button></div></div>}</article>)}</section></div></main>;
 }
 
-function TechnicianApp({tasks,setTasks,now,t,lang,notify,section,setSection,setLang}){
+function TechnicianApp({tasks,setTasks,now,t,lang,notify,section,setSection,setLang,focusTaskId}){
   const me=technicians[0];const [selectedId,setSelectedId]=useState(""),[cause,setCause]=useState(""),[note,setNote]=useState(""),[photo,setPhoto]=useState("");
   const available=tasks.filter(x=>x.status==="reported"),mine=tasks.filter(x=>x.assignee===me.name&&x.status!=="closed"),history=tasks.filter(x=>x.assignee===me.name&&x.status==="closed"),list=section==="available"?available:mine,selected=list.find(x=>x.id===selectedId)||list[0];
+  useEffect(()=>{if(focusTaskId&&list.some(task=>task.id===focusTaskId))setSelectedId(focusTaskId);},[focusTaskId,list]);
   const claim=id=>{const current=tasks.find(task=>task.id===id);if(!current||current.status!=="reported")return notify(t("alreadyClaimed"));setTasks(items=>items.map(task=>task.id===id?{...task,status:"assigned",assignee:me.name,avatar:me.avatar,acceptedAt:Date.now()}:task));setSection("current");notify(t("claimedSuccess"));};
   const start=id=>{setTasks(current=>current.map(task=>task.id===id&&task.status==="assigned"?{...task,status:"repairing",repairStartedAt:Date.now()}:task));notify(t("startedSuccess"));};
   const finish=id=>{if(!cause||!note.trim())return notify(t("resultRequired"));setTasks(current=>current.map(task=>task.id===id&&task.status==="repairing"?{...task,status:"acceptance",repairCompletedAt:Date.now(),result:{causeKey:cause,note:note.trim(),photo}}:task));setCause("");setNote("");setPhoto("");notify(t("handoverSuccess"));};
-  if(section==="history")return <WorkerOrdersPage items={history} title={t("historyTitle")} t={t} lang={lang} now={now} emptyHint={t("emptyHistory")}/>;
+  if(section==="history")return <WorkerOrdersPage items={history} title={t("historyTitle")} t={t} lang={lang} now={now} emptyHint={t("emptyHistory")} focusTaskId={focusTaskId}/>;
   if(section==="equipment")return <EquipmentView tasks={tasks} t={t}/>;
   if(section==="settings")return <Settings t={t} lang={lang} setLang={setLang}/>;
   return <main className="worker-page"><div className="worker-heading"><img src={me.avatar} alt=""/><div><h1>{t("technicianTitle")}</h1><p>{t("technicianSub")}</p></div><span className="available-chip"><i/>{me.name}</span></div><div className="technician-shell"><aside className="tech-list"><div className="list-section-title"><strong>{t(section==="available"?"navAvailable":"navCurrent")}</strong><span>{list.length}</span></div><TaskList tasks={list} selectedId={selected?.id} onSelect={setSelectedId} t={t} lang={lang} now={now} emptyHint={t(section==="available"?"noAvailable":"noMine")}/></aside><section className="tech-detail">{selected?<><div className="tech-machine"><span><Factory size={34}/></span><div><h2>{selected.machineId} · {t(selected.machineKey)}</h2><p><MapPin size={16}/>{selected.location}</p></div><StatusBadge task={selected} t={t}/></div><div className="fault-callout"><WarningCircle size={22}/><div><small>{t("fault")}</small><strong>{t(selected.issueKey)}</strong>{selected.note&&<p>{selected.note}</p>}</div></div><DurationStrip task={selected} now={now} t={t} lang={lang}/>
@@ -130,11 +149,13 @@ function TechnicianApp({tasks,setTasks,now,t,lang,notify,section,setSection,setL
 export function App(){
   const [tasks,setTasks]=useState(readTasks),[role,setRole]=useState(()=>localStorage.getItem("m4-role")||"admin"),[lang,setLang]=useState(()=>localStorage.getItem("m4-lang")||"zh"),[now,setNow]=useState(Date.now()),[toast,setToast]=useState("");
   const [sections,setSections]=useState({admin:"live",operator:"report",technician:"available"});
+  const [focusTaskId,setFocusTaskId]=useState("");
   const t=key=>copy[lang]?.[key]||copy.en[key]||key;
   useEffect(()=>{const timer=setInterval(()=>setNow(Date.now()),1000);return()=>clearInterval(timer);},[]);useEffect(()=>localStorage.setItem(STORAGE_KEY,JSON.stringify(tasks)),[tasks]);useEffect(()=>localStorage.setItem("m4-role",role),[role]);useEffect(()=>{localStorage.setItem("m4-lang",lang);document.documentElement.lang=lang==="zh"?"zh-CN":lang==="bm"?"ms":"en";},[lang]);
   const notify=message=>{setToast(message);clearTimeout(window.__m4ToastTimer);window.__m4ToastTimer=setTimeout(()=>setToast(""),3000);};
   const section=sections[role];
   const setSection=next=>setSections(current=>({...current,[role]:next}));
-  const workerContent=role==="operator"?<OperatorApp tasks={tasks} setTasks={setTasks} now={now} t={t} lang={lang} notify={notify} section={section} setLang={setLang}/>:<TechnicianApp tasks={tasks} setTasks={setTasks} now={now} t={t} lang={lang} notify={notify} section={section} setSection={setSection} setLang={setLang}/>;
-  return <div className="app-shell"><Header role={role} setRole={setRole} lang={lang} setLang={setLang} t={t}/>{role==="admin"?<AdminApp tasks={tasks} setTasks={setTasks} now={now} t={t} lang={lang} notify={notify} setLang={setLang} section={section} setSection={setSection} setRole={setRole}/>:<div className="role-layout"><PortalSidebar role={role} section={section} setSection={setSection} setRole={setRole} t={t}/><div className="role-main worker-main">{workerContent}</div></div>}{toast&&<div className="toast" role="status"><CheckCircle size={19} weight="fill"/>{toast}</div>}</div>;
+  const openSearchTask=task=>{setFocusTaskId(task.id);const target=role==="admin"?(task.status==="closed"?"orders":"live"):role==="operator"?(task.status==="closed"?"history":"current"):(task.status==="closed"?"history":task.status==="reported"?"available":"current");setSections(current=>({...current,[role]:target}));};
+  const workerContent=role==="operator"?<OperatorApp tasks={tasks} setTasks={setTasks} now={now} t={t} lang={lang} notify={notify} section={section} setLang={setLang} focusTaskId={focusTaskId}/>:<TechnicianApp tasks={tasks} setTasks={setTasks} now={now} t={t} lang={lang} notify={notify} section={section} setSection={setSection} setLang={setLang} focusTaskId={focusTaskId}/>;
+  return <div className="app-shell"><Header role={role} setRole={setRole} lang={lang} setLang={setLang} t={t} tasks={tasks} onSearchNavigate={openSearchTask}/>{role==="admin"?<AdminApp tasks={tasks} setTasks={setTasks} now={now} t={t} lang={lang} notify={notify} setLang={setLang} section={section} setSection={setSection} setRole={setRole} focusTaskId={focusTaskId}/>:<div className="role-layout"><PortalSidebar role={role} section={section} setSection={setSection} setRole={setRole} t={t}/><div className="role-main worker-main">{workerContent}</div></div>}{toast&&<div className="toast" role="status"><CheckCircle size={19} weight="fill"/>{toast}</div>}</div>;
 }

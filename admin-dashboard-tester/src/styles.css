@@ -34,3 +34,25 @@
 
 @media(max-width:1050px) and (min-width:761px){.topbar{grid-template-columns:1fr auto}.role-sidebar{padding-inline:9px}.portal-name strong,.nav-caption,.sidebar-role-switch button span,.sidebar-role-switch>small,.sidebar-role-switch p{display:none}.portal-name{justify-content:center;padding-inline:0}.sidebar-role-switch button{justify-content:center;padding:0}}
 @media(max-width:760px){.topbar>.role-switch{display:flex}.role-sidebar{position:sticky;top:108px;z-index:25;display:block;padding:7px 8px;background:var(--navy);overflow-x:auto}.portal-name,.nav-caption,.sidebar-role-switch{display:none}.role-sidebar nav{display:flex;min-width:max-content}.worker-main{padding:0}.worker-main>.simple-page{padding:18px 12px 34px}}
+
+/* Shared search centre for all three roles. */
+.topbar{grid-template-columns:minmax(220px,1fr) minmax(360px,620px) minmax(250px,1fr)}
+.global-order-search{position:relative;width:100%;max-width:620px;justify-self:center}
+.search-input{height:42px;display:flex;align-items:center;gap:9px;padding:0 12px;border:1px solid var(--line);border-radius:10px;color:var(--muted);background:#f7f9fa;transition:border-color .16s ease,box-shadow .16s ease,background .16s ease}
+.global-order-search.open .search-input{border-color:#8eabb9;background:#fff;box-shadow:0 0 0 3px rgba(23,103,166,.09)}
+.search-input input{min-width:0;flex:1;border:0;outline:0;color:var(--ink);background:transparent;font-size:13px}
+.search-input button{width:28px;height:28px;display:grid;place-items:center;border:0;border-radius:7px;color:var(--muted);background:transparent;cursor:pointer}
+.search-popover{position:absolute;top:50px;left:50%;z-index:70;width:min(660px,calc(100vw - 28px));transform:translateX(-50%);overflow:hidden;border:1px solid var(--line);border-radius:13px;background:#fff;box-shadow:0 22px 52px rgba(8,40,60,.2)}
+.search-scopes{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:10px;background:#f3f6f7;border-bottom:1px solid var(--line)}
+.search-scopes button{min-height:38px;display:flex;align-items:center;justify-content:center;gap:6px;padding:0 9px;border:1px solid transparent;border-radius:8px;color:var(--muted);background:transparent;cursor:pointer;font-size:11px;font-weight:700;white-space:nowrap}
+.search-scopes button span{min-width:20px;height:20px;display:grid;place-items:center;border-radius:10px;background:#e4eaed;font-size:9px}
+.search-scopes button.active{color:var(--navy);border-color:#c7d6de;background:#fff;box-shadow:0 4px 10px rgba(8,40,60,.05)}
+.search-scopes button.active span{color:#fff;background:var(--navy)}
+.search-result-head{min-height:42px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;border-bottom:1px solid var(--soft-line)}
+.search-result-head strong{font-size:12px}.search-result-head button{width:28px;height:28px;border:0;border-radius:7px;color:var(--muted);background:transparent;cursor:pointer;font-size:20px}
+.search-results{max-height:370px;overflow-y:auto}
+.search-results>button{width:100%;min-height:66px;display:grid;grid-template-columns:36px minmax(0,1fr) auto 16px;align-items:center;gap:10px;padding:10px 14px;border:0;border-bottom:1px solid var(--soft-line);background:#fff;text-align:start;cursor:pointer}
+.search-results>button:hover{background:#f7fafb}.search-results>button>span:nth-child(2){min-width:0;display:grid;gap:4px}.search-results>button strong,.search-results>button small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.search-results>button strong{font-size:12px}.search-results>button small{color:var(--muted);font-size:10px}.search-empty{min-height:120px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--muted);font-size:12px}
+
+@media(max-width:1050px) and (min-width:761px){.topbar{grid-template-columns:180px minmax(300px,1fr)}.global-order-search{grid-column:2}.topbar-actions{display:none}}
+@media(max-width:760px){.topbar{min-height:162px;grid-template-columns:1fr}.factory-context{grid-row:1}.topbar>.role-switch{grid-row:2}.global-order-search{grid-row:3;max-width:none}.search-input{height:42px}.search-popover{top:48px}.search-scopes{grid-template-columns:1fr 1fr}.search-scopes button{justify-content:space-between;padding-inline:12px}.search-results>button{grid-template-columns:34px minmax(0,1fr) 16px}.search-results .status-badge{display:none}.role-sidebar{top:162px}}
