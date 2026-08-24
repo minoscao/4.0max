@@ -1,258 +1,113 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  Bell, Broadcast, CaretDown, CaretRight, ChartBar, Check, ClipboardText,
-  Clock, Cube, DotsThreeVertical, DownloadSimple, Factory, FunnelSimple,
-  Gauge, Gear, GearSix, ClockCounterClockwise, MagnifyingGlass, SidebarSimple, SquaresFour,
-  Tag, Timer, User, UserPlus, Users, UsersThree, Warning, WarningCircle,
-  Wrench,
+  Bell, Camera, CaretRight, Check, CheckCircle, ClipboardText, Clock, Cube,
+  Factory, Gear, ListChecks, MapPin, PaperPlaneTilt, Play, QrCode, Scan,
+  ShieldCheck, Timer, User, UserPlus, UsersThree, WarningCircle, Wrench, XCircle,
 } from "@phosphor-icons/react";
+import { copy } from "./i18n.js";
 
+const STORAGE_KEY = "m4-workflow-v2";
+const WAIT_LIMIT_MS = 10 * 60 * 1000;
+const machines = [
+  { id:"M-12", nameKey:"pressMachine", line:"Line 2", station:"A-04" },
+  { id:"M-03", nameKey:"motorStation", line:"Line 1", station:"B-11" },
+  { id:"M-08", nameKey:"sensorStation", line:"Line 3", station:"C-02" },
+  { id:"M-17", nameKey:"packingMachine", line:"Line 1", station:"B-08" },
+];
+const faults = ["cannotStart","abnormalNoise","sensorFault","qualityIssue","otherFault"];
+const causes = ["electrical","mechanical","sensor","adjustment"];
 const technicians = [
-  { name: "Azlan", avatar: "/assets/avatar-azlan.png", status: "维修中", load: 78 },
-  { name: "Mei Ling", avatar: "/assets/avatar-mei-ling.png", status: "可接单", load: 34 },
-  { name: "Kumar", avatar: "/assets/avatar-kumar.png", status: "休息中", load: 0 },
+  { name:"Azlan", avatar:"/assets/avatar-azlan.png" },
+  { name:"Mei Ling", avatar:"/assets/avatar-mei-ling.png" },
+  { name:"Kumar", avatar:"/assets/avatar-kumar.png" },
 ];
 
-const initialTasks = [
-  { id: "M-12", machine: "冲压机", issue: "无法启动", status: "timeout", statusText: "响应超时", elapsed: "已等待 24 分钟", assignee: "未分配", avatar: null, line: "2号产线", station: "A-04", reporter: "Lim Wei", reportedAt: "10:24", target: "目标 ≤ 10分钟", wait: 70, repair: 50, total: "2小时 0分钟", Icon: Factory },
-  { id: "M-03", machine: "电机故障", issue: "电机过热停机", status: "repair", statusText: "维修中", elapsed: "18 分钟", assignee: "Azlan", avatar: "/assets/avatar-azlan.png", line: "1号产线", station: "B-11", reporter: "Nur Aina", reportedAt: "10:07", target: "预计 10:50 完成", wait: 22, repair: 58, total: "1小时 20分钟", Icon: GearSix },
-  { id: "M-08", machine: "传感器异常", issue: "定位信号不稳定", status: "acceptance", statusText: "待验收", elapsed: "维修已完成", assignee: "Mei Ling", avatar: "/assets/avatar-mei-ling.png", line: "3号产线", station: "C-02", reporter: "Chen Hao", reportedAt: "09:42", target: "等待操作工确认", wait: 18, repair: 42, total: "1小时 0分钟", Icon: Broadcast },
-  { id: "M-21", machine: "液压压力异常", issue: "压力低于安全值", status: "accepted", statusText: "已接单", elapsed: "6 分钟", assignee: "Kumar", avatar: "/assets/avatar-kumar.png", line: "2号产线", station: "A-09", reporter: "Siti Hana", reportedAt: "10:31", target: "工程师正在前往", wait: 16, repair: 0, total: "16分钟", Icon: Gauge },
-];
+function seedTasks(base=Date.now()) {
+  return [
+    { id:"WO-260824-01",machineId:"M-12",machineKey:"pressMachine",issueKey:"cannotStart",status:"reported",reporter:"Lim Wei",location:"Line 2 · A-04",reportedAt:base-12*60_000,photo:"",note:"" },
+    { id:"WO-260824-02",machineId:"M-03",machineKey:"motorStation",issueKey:"abnormalNoise",status:"repairing",reporter:"Nur Aina",location:"Line 1 · B-11",assignee:"Azlan",avatar:technicians[0].avatar,reportedAt:base-18*60_000,acceptedAt:base-11*60_000,repairStartedAt:base-8*60_000,photo:"",note:"" },
+    { id:"WO-260824-03",machineId:"M-08",machineKey:"sensorStation",issueKey:"sensorFault",status:"acceptance",reporter:"Lim Wei",location:"Line 3 · C-02",assignee:"Mei Ling",avatar:technicians[1].avatar,reportedAt:base-32*60_000,acceptedAt:base-27*60_000,repairStartedAt:base-23*60_000,repairCompletedAt:base-3*60_000,result:{causeKey:"sensor",note:"Sensor connector cleaned and signal tested.",photo:""},photo:"",note:"" },
+    { id:"WO-260824-04",machineId:"M-17",machineKey:"packingMachine",issueKey:"qualityIssue",status:"closed",reporter:"Siti Hana",location:"Line 1 · B-08",assignee:"Kumar",avatar:technicians[2].avatar,reportedAt:base-68*60_000,acceptedAt:base-62*60_000,repairStartedAt:base-58*60_000,repairCompletedAt:base-43*60_000,closedAt:base-39*60_000,result:{causeKey:"adjustment",note:"Guide rail aligned and sample output checked.",photo:""},photo:"",note:"" },
+  ];
+}
+function readTasks(){try{const data=JSON.parse(localStorage.getItem(STORAGE_KEY));return Array.isArray(data)&&data.length?data:seedTasks();}catch{return seedTasks();}}
+function clock(value,lang){if(!value)return "—";return new Intl.DateTimeFormat(lang==="zh"?"zh-CN":lang==="bm"?"ms-MY":"en-MY",{hour:"2-digit",minute:"2-digit"}).format(value);}
+function duration(start,end,lang){if(!start)return "—";const seconds=Math.max(0,Math.floor(((end||Date.now())-start)/1000));const mins=Math.floor(seconds/60);const secs=seconds%60;return lang==="zh"?`${mins}分 ${secs}秒`:`${mins}m ${secs}s`;}
+function statusKey(status){return {reported:"statusReported",assigned:"statusAssigned",repairing:"statusRepairing",acceptance:"statusAcceptance",closed:"statusClosed"}[status];}
+function StatusIcon({status,size=18}){if(status==="reported")return <WarningCircle size={size}/>;if(status==="assigned")return <UserPlus size={size}/>;if(status==="repairing")return <Wrench size={size}/>;return <CheckCircle size={size}/>;}
+function StatusBadge({task,t}){return <span className={`status-badge ${task.status}`}><StatusIcon status={task.status} size={16}/>{t(statusKey(task.status))}</span>;}
 
-const navigation = [
-  { label: "总览", Icon: SquaresFour }, { label: "维修工单", Icon: ClipboardText },
-  { label: "设备", Icon: Cube }, { label: "维修人员", Icon: Users },
-  { label: "班次", Icon: Clock }, { label: "分析", Icon: ChartBar },
-  { label: "故障分类", Icon: Warning }, { label: "设置", Icon: Gear },
-];
-
-const filters = [
-  { key: "all", label: "全部" }, { key: "waiting", label: "待响应" },
-  { key: "repair", label: "维修中" }, { key: "acceptance", label: "待验收" },
-];
-
-const metrics = [
-  { label: "运行设备", value: "28", suffix: "/ 32", Icon: Cube },
-  { label: "待处理", value: "6", suffix: "", Icon: ClipboardText, accent: true },
-  { label: "平均响应", value: "8", suffix: "分钟", Icon: Clock },
-  { label: "今日停机", value: "2", suffix: "小时 18分", Icon: Timer },
-];
-
-function countFor(tasks, filter) {
-  if (filter === "waiting") return tasks.filter((task) => ["timeout", "accepted"].includes(task.status)).length;
-  if (filter === "repair") return tasks.filter((task) => task.status === "repair").length;
-  if (filter === "acceptance") return tasks.filter((task) => task.status === "acceptance").length;
-  return tasks.length;
+function Header({role,setRole,lang,setLang,t}){
+  const profile=role==="admin"?"Nadia":role==="operator"?"Lim Wei":"Azlan";
+  return <header className="topbar">
+    <div className="factory-context"><strong>M4</strong><span>{t("factory")}</span><i/><span>{t("shift")}</span><i/><span>07:00–19:00</span></div>
+    <div className="role-switch">{[["admin","roleAdmin"],["operator","roleOperator"],["technician","roleTechnician"]].map(([key,label])=><button key={key} className={role===key?"active":""} onClick={()=>setRole(key)}>{t(label)}</button>)}</div>
+    <div className="topbar-actions"><div className="languages">{[["bm","BM"],["zh","中文"],["en","EN"]].map(([key,label])=><button key={key} className={lang===key?"active":""} onClick={()=>setLang(key)}>{label}</button>)}</div><button className="icon-button notification" aria-label="Notifications"><Bell size={20}/><span/></button><div className="profile"><span>{profile[0]}</span><b>{profile}</b></div></div>
+  </header>;
 }
 
-function StatusIcon({ status, size = 17 }) {
-  if (status === "timeout") return <WarningCircle size={size} />;
-  if (status === "acceptance") return <Check size={size} weight="bold" />;
-  if (status === "repair") return <Wrench size={size} />;
-  return <ClipboardText size={size} />;
+function TaskList({tasks,selectedId,onSelect,t,lang,now,emptyHint}){
+  if(!tasks.length)return <div className="empty-state"><ClipboardText size={34}/><strong>{emptyHint||t("noOrders")}</strong><span>{t("noOrdersHint")}</span></div>;
+  return <div className="task-list" role="listbox">{tasks.map(task=><button key={task.id} className={`task-row ${selectedId===task.id?"selected":""}`} onClick={()=>onSelect(task.id)} role="option" aria-selected={selectedId===task.id}><span className={`status-symbol ${task.status}`}><StatusIcon status={task.status} size={21}/></span><span className="task-copy"><strong>{task.machineId} · {t(task.machineKey)}</strong><small>{t(task.issueKey)} · {duration(task.reportedAt,task.closedAt||now,lang)}</small></span><StatusBadge task={task} t={t}/><CaretRight size={17}/></button>)}</div>;
+}
+function DurationStrip({task,now,t,lang}){return <div className="duration-strip"><div><Clock size={18}/><span>{t("waiting")}</span><strong>{duration(task.reportedAt,task.acceptedAt||now,lang)}</strong></div><div><Wrench size={18}/><span>{t("repairTime")}</span><strong>{task.repairStartedAt?duration(task.repairStartedAt,task.repairCompletedAt||now,lang):t("notStarted")}</strong></div><div><Timer size={18}/><span>{t("totalTime")}</span><strong>{duration(task.reportedAt,task.closedAt||now,lang)}</strong></div></div>;}
+function Timeline({task,t,lang}){const steps=[["reported",task.reportedAt],["assigned",task.acceptedAt],["repairStarted",task.repairStartedAt],["repairDone",task.repairCompletedAt],["acceptedClosed",task.closedAt]];const active=steps.findIndex(([,time])=>!time);return <ol className="timeline">{steps.map(([key,time],index)=><li key={key} className={time?"complete":index===active?"active":""}><span>{time?<Check size={13} weight="bold"/>:index+1}</span><b>{t(key)}</b><small>{time?clock(time,lang):index===active?t("now"):"—"}</small></li>)}</ol>;}
+
+function TaskDetail({task,now,t,lang,onFallbackAssign}){
+  if(!task)return <div className="detail-empty"><ListChecks size={38}/><strong>{t("orderDetail")}</strong><span>{t("selectOrder")}</span></div>;
+  const overdue=task.status==="reported"&&now-task.reportedAt>=WAIT_LIMIT_MS;
+  return <article className="detail-pane"><header className="detail-header"><span className="machine-block"><Factory size={31}/></span><div><div className="detail-title"><h2>{task.machineId} · {t(task.machineKey)}</h2><StatusBadge task={task} t={t}/></div><p>{task.id}</p></div></header>
+    <div className="fact-grid"><div><WarningCircle size={18}/><span>{t("fault")}</span><strong>{t(task.issueKey)}</strong></div><div><MapPin size={18}/><span>{t("location")}</span><strong>{task.location}</strong></div><div><User size={18}/><span>{t("reporter")}</span><strong>{task.reporter}</strong></div><div><UsersThree size={18}/><span>{t("technician")}</span><strong>{task.assignee||t("unassigned")}</strong></div></div>
+    <DurationStrip task={task} now={now} t={t} lang={lang}/><Timeline task={task} t={t} lang={lang}/>
+    {task.result&&<div className="result-record"><ShieldCheck size={22}/><div><strong>{t("resultRecorded")} · {t(task.result.causeKey)}</strong><p>{task.result.note}</p></div></div>}
+    {task.status==="reported"&&<div className={`fallback-panel ${overdue?"overdue":""}`}><div>{overdue?<WarningCircle size={23}/>:<UsersThree size={23}/>}<span><strong>{overdue?t("fallbackTitle"):t("normalClaim")}</strong><small>{overdue?t("fallbackHint"):t("normalClaimHint")}</small></span></div>{overdue&&<div className="fallback-actions">{technicians.map(tech=><button key={tech.name} onClick={()=>onFallbackAssign(task.id,tech)}><img src={tech.avatar} alt=""/>{t("assign")} {tech.name}</button>)}</div>}</div>}
+  </article>;
 }
 
-function AppHeader({ language, setLanguage, notify }) {
-  return (
-    <header className="topbar">
-      <div className="factory-context"><span>Kilang 2</span><i /><span>早班</span><i /><span>07:00–19:00</span></div>
-      <div className="role-switch" aria-label="界面角色">
-        <button className="active">管理员</button>
-        <button onClick={() => notify("操作工端将在下一阶段开放")}>操作工</button>
-        <button onClick={() => notify("维修工程师端将在下一阶段开放")}>维修工程师</button>
-      </div>
-      <div className="topbar-actions">
-        <div className="languages" aria-label="语言">
-          {["BM", "中文", "EN"].map((item) => <button key={item} className={language === item ? "active" : ""} onClick={() => setLanguage(item)}>{item}</button>)}
-        </div>
-        <label className="global-search"><MagnifyingGlass size={18} /><input aria-label="全局搜索" placeholder="搜索设备、工单或人员" /></label>
-        <button className="icon-button notification" aria-label="通知" title="通知"><Bell size={21} /><span>3</span></button>
-        <button className="profile-button" aria-label="用户菜单"><span>N</span><b>Nadia</b><CaretDown size={14} /></button>
-      </div>
-    </header>
-  );
+function EquipmentView({tasks,t}){return <main className="simple-page"><PageHeading title={t("equipmentTitle")} sub={t("adminSub")}/><div className="equipment-grid">{machines.map(machine=>{const active=tasks.filter(x=>x.machineId===machine.id&&x.status!=="closed").length;return <article key={machine.id}><Factory size={27}/><div><strong>{machine.id} · {t(machine.nameKey)}</strong><span>{machine.line} · {machine.station}</span></div><b className={active?"warning-text":"ok-text"}>{active?`${active} ${t("ordersCount")}`:"OK"}</b></article>;})}</div></main>;}
+function TeamView({tasks,t}){return <main className="simple-page"><PageHeading title={t("teamTitle")} sub={t("normalClaimHint")}/><div className="team-grid">{technicians.map(tech=>{const active=tasks.filter(x=>x.assignee===tech.name&&!['closed','acceptance'].includes(x.status)).length;return <article key={tech.name}><img src={tech.avatar} alt=""/><div><strong>{tech.name}</strong><span>{active?t("busy"):t("teamAvailable")}</span></div><b>{active} {t("ordersCount")}</b></article>;})}</div></main>;}
+function Settings({t,lang,setLang,onReset}){return <main className="simple-page settings-page"><PageHeading title={t("settingsTitle")} sub={t("settingsHint")}/><section><h2>{t("languageSetting")}</h2><div className="language-cards">{[["bm","Bahasa Melayu"],["zh","中文"],["en","English"]].map(([key,label])=><button key={key} className={lang===key?"active":""} onClick={()=>setLang(key)}><span>{label}</span>{lang===key&&<CheckCircle size={20} weight="fill"/>}</button>)}</div><button className="secondary-button" onClick={onReset}>{t("demoReset")}</button></section></main>;}
+function PageHeading({title,sub,live,t}){return <div className="page-heading"><div><h1>{title}</h1><p>{sub}</p></div>{live&&<span className="live-chip"><i/>{t("live")}</span>}</div>;}
+
+function AdminApp({tasks,setTasks,now,t,lang,notify,setLang}){
+  const [section,setSection]=useState("live"),[filter,setFilter]=useState("open");
+  const filtered=useMemo(()=>tasks.filter(task=>filter==="all"||(filter==="open"?task.status!=="closed":task.status==="closed")),[tasks,filter]);
+  const [selectedId,setSelectedId]=useState(filtered[0]?.id);const selected=filtered.find(x=>x.id===selectedId)||filtered[0];
+  useEffect(()=>{if(filtered.length&&!filtered.some(x=>x.id===selectedId))setSelectedId(filtered[0].id);},[filtered,selectedId]);
+  const fallback=(id,tech)=>{setTasks(current=>current.map(task=>task.id===id&&task.status==="reported"?{...task,status:"assigned",assignee:tech.name,avatar:tech.avatar,acceptedAt:Date.now(),assignedByAdmin:true}:task));notify(`${t("assignedTo")} ${tech.name}`);};
+  const nav=[["live","navLive",ClipboardText],["orders","navOrders",ListChecks],["equipment","navEquipment",Cube],["team","navTeam",UsersThree],["settings","navSettings",Gear]];
+  const metrics=[["activeOrders",tasks.filter(x=>x.status!=="closed").length,ClipboardText],["waitingClaim",tasks.filter(x=>x.status==="reported").length,Clock],["repairing",tasks.filter(x=>["assigned","repairing"].includes(x.status)).length,Wrench],["waitingAccept",tasks.filter(x=>x.status==="acceptance").length,CheckCircle]];
+  return <div className="role-layout"><aside className="role-sidebar"><nav>{nav.map(([key,label,Icon])=><button key={key} className={section===key?"active":""} onClick={()=>setSection(key)}><Icon size={21}/><span>{t(label)}</span></button>)}</nav></aside><main className="role-main">
+    {section==="settings"?<Settings t={t} lang={lang} setLang={setLang} onReset={()=>{const next=seedTasks();setTasks(next);notify(t("resetDone"));}}/>:section==="equipment"?<EquipmentView tasks={tasks} t={t}/>:section==="team"?<TeamView tasks={tasks} t={t}/>:<><PageHeading title={t("adminTitle")} sub={t("adminSub")} live t={t}/><section className="metric-strip">{metrics.map(([key,value,Icon])=><div className="metric" key={key}><Icon size={27}/><span>{t(key)}</span><strong>{value}</strong></div>)}</section><section className="workspace"><div className="workspace-head"><div><Wrench size={22}/><h2>{section==="orders"?t("navOrders"):t("currentOrders")}</h2><span>{filtered.length}</span></div><div className="segmented">{["all","open","closed"].map(key=><button key={key} className={filter===key?"active":""} onClick={()=>setFilter(key)}>{t(key)}</button>)}</div></div><div className="workspace-grid"><TaskList tasks={filtered} selectedId={selected?.id} onSelect={setSelectedId} t={t} lang={lang} now={now}/><TaskDetail task={selected} now={now} t={t} lang={lang} onFallbackAssign={fallback}/></div></section></>}
+  </main></div>;
 }
 
-function Sidebar({ activeNav, onNavigate }) {
-  return (
-    <aside className="sidebar">
-      <div className="brand">M4</div>
-      <nav aria-label="主导航">
-        {navigation.map(({ label, Icon }) => <button key={label} className={activeNav === label ? "active" : ""} onClick={() => onNavigate(label)} title={label}><Icon size={23} /><span>{label}</span></button>)}
-      </nav>
-      <button className="collapse-button" aria-label="收起侧边栏"><SidebarSimple size={24} /></button>
-    </aside>
-  );
+function PhotoInput({label,hint,value,onChange,t}){const read=file=>{if(!file||!file.type.startsWith("image/"))return;const reader=new FileReader();reader.onload=()=>onChange(reader.result);reader.readAsDataURL(file);};return <label className={`photo-input ${value?"has-photo":""}`}><input type="file" accept="image/*" capture="environment" onChange={e=>read(e.target.files?.[0])}/>{value?<img src={value} alt={t("photoUploaded")}/>:<Camera size={28}/>}<span><strong>{label}</strong><small>{value?t("photoUploaded"):hint}</small></span></label>;}
+function OperatorApp({tasks,setTasks,now,t,lang,notify}){
+  const [machine,setMachine]=useState(null),[fault,setFault]=useState(""),[photo,setPhoto]=useState(""),[note,setNote]=useState("");
+  const mine=tasks.filter(x=>x.reporter==="Lim Wei").sort((a,b)=>b.reportedAt-a.reportedAt);
+  const submit=()=>{if(!machine||!fault)return notify(t("requiredFault"));if(!photo)return notify(t("requiredPhoto"));const created={id:`WO-${Date.now().toString().slice(-8)}`,machineId:machine.id,machineKey:machine.nameKey,issueKey:fault,status:"reported",reporter:"Lim Wei",location:`${machine.line} · ${machine.station}`,reportedAt:Date.now(),photo,note};setTasks(current=>[created,...current]);setMachine(null);setFault("");setPhoto("");setNote("");notify(t("reportSuccess"));};
+  const close=id=>{setTasks(current=>current.map(task=>task.id===id&&task.status==="acceptance"?{...task,status:"closed",closedAt:Date.now()}:task));notify(t("closedSuccess"));};
+  const rework=id=>{setTasks(current=>current.map(task=>task.id===id&&task.status==="acceptance"?{...task,status:"repairing",repairStartedAt:Date.now(),repairCompletedAt:null,closedAt:null}:task));notify(t("reworkSuccess"));};
+  return <main className="worker-page"><div className="worker-heading"><span className="role-icon"><Scan size={28}/></span><div><h1>{t("operatorTitle")}</h1><p>{t("operatorSub")}</p></div></div><div className="worker-grid"><section className="report-panel">
+    {!machine?<div className="scan-state"><span><QrCode size={74}/></span><h2>{t("scanMachine")}</h2><p>{t("scanHint")}</p><button className="primary-button" onClick={()=>setMachine(machines[0])}><Scan size={21}/>{t("startScan")}</button></div>:<><div className="scanned-machine"><span><Factory size={31}/></span><div><small>{t("scanned")}</small><strong>{machine.id} · {t(machine.nameKey)}</strong><p>{machine.line} · {machine.station}</p></div><button onClick={()=>setMachine(null)}>{t("scanAgain")}</button></div><fieldset className="fault-picker"><legend>{t("chooseFault")}</legend><div>{faults.map(key=><button type="button" key={key} className={fault===key?"selected":""} onClick={()=>setFault(key)}><WarningCircle size={21}/><span>{t(key)}</span>{fault===key&&<Check size={17} weight="bold"/>}</button>)}</div></fieldset><PhotoInput label={t("addPhoto")} hint={t("photoHint")} value={photo} onChange={setPhoto} t={t}/><label className="text-field"><span>{t("noteOptional")}</span><textarea value={note} onChange={e=>setNote(e.target.value)} placeholder={t("notePlaceholder")} maxLength={240}/></label><button className="primary-button submit-report" onClick={submit} disabled={!fault}><PaperPlaneTilt size={21}/>{t("submitRepair")}</button></>}
+  </section><section className="my-orders"><header><h2>{t("myOrders")}</h2><span>{mine.length}</span></header>{mine.map(task=><article key={task.id}><div className="order-summary"><span className={`status-symbol ${task.status}`}><StatusIcon status={task.status} size={20}/></span><div><strong>{task.machineId} · {t(task.machineKey)}</strong><small>{task.id} · {duration(task.reportedAt,task.closedAt||now,lang)}</small></div><StatusBadge task={task} t={t}/></div>{task.status==="acceptance"&&<div className="acceptance-box"><p>{t("acceptanceHint")}</p>{task.result&&<blockquote>{task.result.note}</blockquote>}<div><button className="reject-button" onClick={()=>rework(task.id)}><XCircle size={19}/>{t("rejectResult")}</button><button className="accept-button" onClick={()=>close(task.id)}><CheckCircle size={19}/>{t("acceptResult")}</button></div></div>}</article>)}</section></div></main>;
 }
 
-function MetricStrip() {
-  return (
-    <section className="metric-strip" aria-label="班次概况">
-      {metrics.map(({ label, value, suffix, Icon, accent }) => <div className="metric" key={label}><Icon size={31} /><div><span>{label}</span><strong className={accent ? "accent" : ""}>{value}<small>{suffix}</small></strong></div></div>)}
-    </section>
-  );
+function TechnicianApp({tasks,setTasks,now,t,lang,notify}){
+  const me=technicians[0];const [tab,setTab]=useState("available"),[selectedId,setSelectedId]=useState(""),[cause,setCause]=useState(""),[note,setNote]=useState(""),[photo,setPhoto]=useState("");
+  const available=tasks.filter(x=>x.status==="reported"),mine=tasks.filter(x=>x.assignee===me.name&&x.status!=="closed"),list=tab==="available"?available:mine,selected=list.find(x=>x.id===selectedId)||list[0];
+  const claim=id=>{const current=tasks.find(task=>task.id===id);if(!current||current.status!=="reported")return notify(t("alreadyClaimed"));setTasks(items=>items.map(task=>task.id===id?{...task,status:"assigned",assignee:me.name,avatar:me.avatar,acceptedAt:Date.now()}:task));setTab("mine");notify(t("claimedSuccess"));};
+  const start=id=>{setTasks(current=>current.map(task=>task.id===id&&task.status==="assigned"?{...task,status:"repairing",repairStartedAt:Date.now()}:task));notify(t("startedSuccess"));};
+  const finish=id=>{if(!cause||!note.trim())return notify(t("resultRequired"));setTasks(current=>current.map(task=>task.id===id&&task.status==="repairing"?{...task,status:"acceptance",repairCompletedAt:Date.now(),result:{causeKey:cause,note:note.trim(),photo}}:task));setCause("");setNote("");setPhoto("");notify(t("handoverSuccess"));};
+  return <main className="worker-page"><div className="worker-heading"><img src={me.avatar} alt=""/><div><h1>{t("technicianTitle")}</h1><p>{t("technicianSub")}</p></div><span className="available-chip"><i/>{me.name}</span></div><div className="technician-shell"><aside className="tech-list"><div className="worker-tabs"><button className={tab==="available"?"active":""} onClick={()=>setTab("available")}>{t("available")}<span>{available.length}</span></button><button className={tab==="mine"?"active":""} onClick={()=>setTab("mine")}>{t("mine")}<span>{mine.length}</span></button></div><TaskList tasks={list} selectedId={selected?.id} onSelect={setSelectedId} t={t} lang={lang} now={now} emptyHint={t(tab==="available"?"noAvailable":"noMine")}/></aside><section className="tech-detail">{selected?<><div className="tech-machine"><span><Factory size={34}/></span><div><h2>{selected.machineId} · {t(selected.machineKey)}</h2><p><MapPin size={16}/>{selected.location}</p></div><StatusBadge task={selected} t={t}/></div><div className="fault-callout"><WarningCircle size={22}/><div><small>{t("fault")}</small><strong>{t(selected.issueKey)}</strong>{selected.note&&<p>{selected.note}</p>}</div></div><DurationStrip task={selected} now={now} t={t} lang={lang}/>
+    {selected.status==="reported"&&<div className="claim-zone"><p><UsersThree size={19}/>{t("broadcast")}</p><button className="primary-button" onClick={()=>claim(selected.id)}><UserPlus size={21}/>{t("claim")}</button></div>}{selected.status==="assigned"&&<div className="claim-zone"><p><MapPin size={19}/>{t("goToMachine")}</p><button className="primary-button" onClick={()=>start(selected.id)}><Play size={21}/>{t("startRepair")}</button></div>}{selected.status==="repairing"&&<div className="repair-form"><h3><Wrench size={21}/>{t("submitResult")}</h3><label><span>{t("resultCategory")}</span><select value={cause} onChange={e=>setCause(e.target.value)}><option value="">—</option>{causes.map(key=><option key={key} value={key}>{t(key)}</option>)}</select></label><label><span>{t("resultNote")}</span><textarea value={note} onChange={e=>setNote(e.target.value)} placeholder={t("resultPlaceholder")} maxLength={300}/></label><PhotoInput label={t("resultPhoto")} hint={t("photoHint")} value={photo} onChange={setPhoto} t={t}/><button className="primary-button" onClick={()=>finish(selected.id)}><CheckCircle size={21}/>{t("finishRepair")}</button></div>}{selected.status==="acceptance"&&<div className="waiting-acceptance"><CheckCircle size={31}/><strong>{t("statusAcceptance")}</strong><p>{t("handoverSuccess")}</p></div>}</>:<div className="detail-empty"><Wrench size={38}/><strong>{t(tab==="available"?"noAvailable":"noMine")}</strong></div>}</section></div></main>;
 }
 
-function WorkspaceToolbar({ tasks, filter, setFilter, searchOpen, setSearchOpen }) {
-  return (
-    <div className="workspace-toolbar">
-      <div className="workspace-title"><Wrench size={24} /><h2>当前任务</h2><span>{tasks.length}</span></div>
-      <div className="filter-tabs" role="tablist" aria-label="任务筛选">
-        {filters.map((item) => <button key={item.key} role="tab" aria-selected={filter === item.key} className={filter === item.key ? "active" : ""} onClick={() => setFilter(item.key)}>{item.label}<span>{countFor(tasks, item.key)}</span></button>)}
-      </div>
-      <button className="filter-button" aria-label="搜索任务" title="搜索任务" onClick={() => setSearchOpen(!searchOpen)}><MagnifyingGlass size={18} /><FunnelSimple size={16} /></button>
-    </div>
-  );
-}
-
-function TaskList({ tasks, selectedId, onSelect, query, setQuery, searchOpen }) {
-  return (
-    <div className="master-pane">
-      {searchOpen && <label className="task-search"><MagnifyingGlass size={17} /><input autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索设备或故障" /></label>}
-      <div className="task-rows" role="listbox" aria-label="当前任务列表">
-        {tasks.length ? tasks.map((task) => {
-          const Icon = task.Icon;
-          return (
-            <button key={task.id} role="option" aria-selected={selectedId === task.id} className={`task-row ${selectedId === task.id ? "selected" : ""}`} onClick={() => onSelect(task.id)}>
-              <span className="machine-icon"><Icon size={29} /></span>
-              <span className="task-copy"><strong>{task.id} · {task.machine}</strong><small className={`status ${task.status}`}><StatusIcon status={task.status} />{task.statusText} · {task.elapsed}</small></span>
-              <span className="assignee">{task.avatar ? <img src={task.avatar} alt="" /> : <User size={19} />}<span>{task.assignee}</span></span>
-              <CaretRight size={17} />
-            </button>
-          );
-        }) : <div className="empty-state"><MagnifyingGlass size={26} /><strong>没有匹配的任务</strong><span>换一个关键词或筛选条件</span></div>}
-      </div>
-      <button className="view-all">查看全部任务 <CaretRight size={18} /></button>
-    </div>
-  );
-}
-
-function ProgressTimeline({ status }) {
-  const current = status === "repair" ? 2 : status === "acceptance" ? 3 : 1;
-  const steps = ["报修", "等待接单", "维修", "验收"];
-  return (
-    <ol className="timeline" aria-label="维修进度">
-      {steps.map((step, index) => {
-        const complete = index < current;
-        const active = index === current;
-        return <li key={step} className={complete ? "complete" : active ? "active" : ""}><span>{complete ? <Check size={14} weight="bold" /> : index + 1}</span><b>{step}</b>{index === 0 && <small>10:24</small>}{active && <small>当前</small>}</li>;
-      })}
-    </ol>
-  );
-}
-
-function AssignmentPanel({ onAssign, onCancel }) {
-  return (
-    <div className="assignment-panel">
-      <div><strong>选择维修工程师</strong><span>指派后将立即通知工程师</span></div>
-      <div className="assignment-options">
-        {technicians.map((tech) => <button key={tech.name} disabled={tech.status === "休息中"} onClick={() => onAssign(tech)}><img src={tech.avatar} alt="" /><span><b>{tech.name}</b><small>{tech.status} · 负荷 {tech.load}%</small></span><CaretRight size={16} /></button>)}
-      </div>
-      <button className="cancel-assign" onClick={onCancel}>取消</button>
-    </div>
-  );
-}
-
-function TaskDetail({ task, onAssign, notify }) {
-  const [assigning, setAssigning] = useState(false);
-  const Icon = task.Icon;
-  return (
-    <article className="detail-pane">
-      <div className="detail-header">
-        <span className="detail-machine-icon"><Icon size={34} /></span>
-        <div className="detail-heading"><div><h3>{task.id} {task.machine}</h3><span className={`status-badge ${task.status}`}>{task.statusText}</span></div><p>{task.line} · 工位 {task.station}</p></div>
-        <div className={`response-time ${task.status}`}><span><WarningCircle size={19} />{task.status === "timeout" ? "等待响应" : task.statusText}</span><strong>{task.status === "timeout" ? "24" : task.elapsed.replace(/[^0-9]/g, "") || "—"}<small>{task.status === "timeout" ? "分钟" : ""}</small></strong><small>{task.target}</small></div>
-        <button className="icon-button detail-menu" aria-label="更多操作" title="更多操作"><DotsThreeVertical size={21} /></button>
-      </div>
-      <dl className="detail-facts">
-        <div><dt><Tag size={17} />故障类型</dt><dd>{task.issue}</dd></div><div><dt><Clock size={17} />报修时间</dt><dd>{task.reportedAt}</dd></div>
-        <div><dt><User size={17} />报修人</dt><dd>{task.reporter}</dd></div><div><dt><UsersThree size={17} />当前负责人</dt><dd>{task.assignee}</dd></div>
-      </dl>
-      <ProgressTimeline status={task.status} />
-      {assigning ? <AssignmentPanel onCancel={() => setAssigning(false)} onAssign={(tech) => { onAssign(task.id, tech); setAssigning(false); }} /> : (
-        <div className="detail-actions">
-          <button className="primary-action" onClick={() => setAssigning(true)}><UserPlus size={20} />{task.assignee === "未分配" ? "指派工程师" : "重新指派"}</button>
-          <button className="secondary-action" onClick={() => notify(`${task.id} 设备资料已打开（测试）`)}><Factory size={20} />查看设备</button>
-          <button className="quiet-action" onClick={() => notify(`${task.id} 暂无更多维修记录`)}><ClockCounterClockwise size={20} />查看维修记录</button>
-        </div>
-      )}
-    </article>
-  );
-}
-
-function DowntimeChart({ tasks }) {
-  return (
-    <section className="analytics-panel downtime-panel">
-      <header><Clock size={23} /><h2>停机组成</h2><div className="legend"><span><i className="wait" />等待</span><span><i className="repair" />维修</span></div></header>
-      <div className="downtime-rows">{tasks.slice(0, 3).map((task) => <div className="downtime-row" key={task.id}><strong>{task.id}</strong><div className="stacked-bar" aria-label={`${task.id} 停机组成`}><span className="wait" style={{ width: `${Math.max(20, task.wait)}%` }}>{task.wait}分钟</span><span className="repair" style={{ width: `${Math.max(24, task.repair)}%` }}>{task.repair || "—"}{task.repair ? "分钟" : ""}</span></div><small>{task.total}</small></div>)}</div>
-    </section>
-  );
-}
-
-function TechnicianStatus() {
-  return (
-    <section className="analytics-panel technician-panel">
-      <header><UsersThree size={24} /><h2>工程师状态</h2><span>工作负载</span></header>
-      <div className="tech-rows">{technicians.map((tech) => <div className="tech-row" key={tech.name}><img src={tech.avatar} alt="" /><strong>{tech.name}</strong><span className={tech.status === "可接单" ? "available" : tech.status === "维修中" ? "working" : "resting"}>{tech.status}</span><div className="load-bar"><i style={{ width: `${tech.load}%` }} /></div><b>{tech.load ? `${tech.load}%` : "—"}</b></div>)}</div>
-    </section>
-  );
-}
-
-export function App() {
-  const [tasks, setTasks] = useState(initialTasks);
-  const [selectedId, setSelectedId] = useState("M-12");
-  const [filter, setFilter] = useState("all");
-  const [query, setQuery] = useState("");
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [language, setLanguage] = useState("中文");
-  const [activeNav, setActiveNav] = useState("总览");
-  const [toast, setToast] = useState("");
-
-  const notify = (message) => {
-    setToast(message);
-    window.clearTimeout(window.__m4ToastTimer);
-    window.__m4ToastTimer = window.setTimeout(() => setToast(""), 2600);
-  };
-
-  const visibleTasks = useMemo(() => tasks.filter((task) => {
-    const filterMatch = filter === "all" || (filter === "waiting" && ["timeout", "accepted"].includes(task.status)) || task.status === filter;
-    const queryMatch = `${task.id}${task.machine}${task.issue}${task.assignee}`.toLowerCase().includes(query.toLowerCase());
-    return filterMatch && queryMatch;
-  }), [tasks, filter, query]);
-  const selectedTask = visibleTasks.find((task) => task.id === selectedId) || visibleTasks[0] || tasks[0];
-
-  useEffect(() => {
-    if (visibleTasks.length && !visibleTasks.some((task) => task.id === selectedId)) {
-      setSelectedId(visibleTasks[0].id);
-    }
-  }, [visibleTasks, selectedId]);
-
-  const assignTask = (taskId, tech) => {
-    setTasks((current) => current.map((task) => task.id === taskId ? { ...task, assignee: tech.name, avatar: tech.avatar, status: "accepted", statusText: "已接单", elapsed: "刚刚指派", target: `${tech.name} 正在前往` } : task));
-    notify(`已将 ${taskId} 指派给 ${tech.name}`);
-  };
-
-  const navigate = (label) => { setActiveNav(label); if (label !== "总览") notify(`${label} 页面将在下一阶段开放`); };
-
-  return (
-    <div className="app-shell">
-      <Sidebar activeNav={activeNav} onNavigate={navigate} />
-      <div className="app-frame">
-        <AppHeader language={language} setLanguage={setLanguage} notify={notify} />
-        <main className="dashboard">
-          <div className="page-heading"><div><h1>班次控制台</h1><p>8月21日 · 当前班次</p></div><button className="export-button" onClick={() => notify("周报已导出（测试数据）")}><DownloadSimple size={20} />导出周报</button></div>
-          <MetricStrip />
-          <section className="task-workspace">
-            <WorkspaceToolbar tasks={tasks} filter={filter} setFilter={setFilter} searchOpen={searchOpen} setSearchOpen={setSearchOpen} />
-            <TaskList tasks={visibleTasks} selectedId={selectedTask.id} onSelect={setSelectedId} query={query} setQuery={setQuery} searchOpen={searchOpen} />
-            {visibleTasks.length ? <TaskDetail key={selectedTask.id} task={selectedTask} onAssign={assignTask} notify={notify} /> : <div className="detail-empty"><MagnifyingGlass size={28} /><strong>没有可显示的任务详情</strong><span>清除搜索条件后再选择任务</span></div>}
-          </section>
-          <div className="analytics-grid"><DowntimeChart tasks={tasks} /><TechnicianStatus /></div>
-        </main>
-      </div>
-      <nav className="mobile-nav" aria-label="移动端主导航">{navigation.slice(0, 5).map(({ label, Icon }) => <button key={label} className={activeNav === label ? "active" : ""} onClick={() => navigate(label)}><Icon size={22} /><span>{label}</span></button>)}</nav>
-      {toast && <div className="toast" role="status"><Check size={18} weight="bold" />{toast}</div>}
-    </div>
-  );
+export function App(){
+  const [tasks,setTasks]=useState(readTasks),[role,setRole]=useState(()=>localStorage.getItem("m4-role")||"admin"),[lang,setLang]=useState(()=>localStorage.getItem("m4-lang")||"zh"),[now,setNow]=useState(Date.now()),[toast,setToast]=useState("");
+  const t=key=>copy[lang]?.[key]||copy.en[key]||key;
+  useEffect(()=>{const timer=setInterval(()=>setNow(Date.now()),1000);return()=>clearInterval(timer);},[]);useEffect(()=>localStorage.setItem(STORAGE_KEY,JSON.stringify(tasks)),[tasks]);useEffect(()=>localStorage.setItem("m4-role",role),[role]);useEffect(()=>{localStorage.setItem("m4-lang",lang);document.documentElement.lang=lang==="zh"?"zh-CN":lang==="bm"?"ms":"en";},[lang]);
+  const notify=message=>{setToast(message);clearTimeout(window.__m4ToastTimer);window.__m4ToastTimer=setTimeout(()=>setToast(""),3000);};
+  return <div className="app-shell"><Header role={role} setRole={setRole} lang={lang} setLang={setLang} t={t}/>{role==="admin"?<AdminApp tasks={tasks} setTasks={setTasks} now={now} t={t} lang={lang} notify={notify} setLang={setLang}/>:role==="operator"?<OperatorApp tasks={tasks} setTasks={setTasks} now={now} t={t} lang={lang} notify={notify}/>:<TechnicianApp tasks={tasks} setTasks={setTasks} now={now} t={t} lang={lang} notify={notify}/>} {toast&&<div className="toast" role="status"><CheckCircle size={19} weight="fill"/>{toast}</div>}</div>;
 }
