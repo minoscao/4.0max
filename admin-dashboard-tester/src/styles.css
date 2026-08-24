@@ -11,3 +11,26 @@
 @media(max-width:1050px){.topbar{grid-template-columns:1fr auto;padding-inline:18px}.factory-context span,.factory-context i{display:none}.role-switch{grid-column:2}.topbar-actions{display:none}.role-layout{grid-template-columns:76px minmax(0,1fr)}.role-sidebar button{justify-content:center;padding:0}.role-sidebar button span{display:none}.metric-strip{grid-template-columns:1fr 1fr}.metric:nth-child(2){border-inline-end:0}.metric:nth-child(-n+2){border-bottom:1px solid var(--line)}.workspace-grid{grid-template-columns:minmax(330px,42%) minmax(0,1fr)}.fact-grid{grid-template-columns:1fr}.fact-grid>div{border-inline-end:0}.worker-grid{grid-template-columns:1fr}}
 @media(max-width:760px){.topbar{height:auto;min-height:108px;grid-template-columns:1fr;gap:8px;padding:10px 12px}.factory-context{justify-content:center}.role-switch{grid-column:1;grid-row:2;width:100%}.role-switch button{flex:1;min-width:0;padding-inline:8px;font-size:12px}.role-layout{display:block}.role-sidebar{padding:7px 8px;overflow-x:auto}.role-sidebar nav{position:static;display:flex;min-width:max-content}.role-sidebar button{width:auto;min-height:40px;padding:0 12px}.role-sidebar button span{display:inline;font-size:11px}.role-main{padding:18px 12px 34px}.page-heading{min-height:82px}.page-heading h1,.worker-heading h1{font-size:25px}.metric-strip{margin-top:8px}.metric{min-height:74px;grid-template-columns:27px 1fr auto;padding:11px}.metric strong{font-size:24px}.workspace-head{align-items:flex-start;flex-direction:column}.segmented{width:100%}.segmented button{flex:1}.workspace-grid{grid-template-columns:1fr}.task-list{border-inline-end:0;border-bottom:1px solid var(--line);max-height:330px;overflow-y:auto}.detail-pane{padding:18px 13px}.duration-strip{grid-template-columns:1fr}.duration-strip>div{border-inline-end:0;border-bottom:1px solid var(--line)}.timeline{overflow-x:auto;grid-template-columns:repeat(5,minmax(82px,1fr));padding-bottom:8px}.language-cards{grid-template-columns:1fr}.worker-page{padding:20px 12px 40px}.worker-heading{min-height:64px}.worker-heading .role-icon{width:48px;height:48px}.worker-grid{margin-top:14px}.report-panel{padding:15px}.scan-state{min-height:380px}.fault-picker>div{grid-template-columns:1fr}.order-summary{grid-template-columns:36px minmax(0,1fr)}.order-summary .status-badge{grid-column:2;justify-self:start}.technician-shell{grid-template-columns:1fr;min-height:0}.tech-list{border-inline-end:0;border-bottom:1px solid var(--line)}.tech-detail{padding:18px 13px;min-height:420px}.tech-machine{grid-template-columns:51px minmax(0,1fr)}.tech-machine .status-badge{grid-column:2;justify-self:start}.worker-heading .available-chip{display:none}.toast{left:12px;right:12px;bottom:12px;justify-content:center}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;scroll-behavior:auto!important}}
+
+/* Unified role workspace: desktop role switching lives in the sidebar. */
+.topbar{grid-template-columns:minmax(260px,1fr) minmax(260px,1fr)}
+.topbar>.role-switch{display:none}
+.role-sidebar{display:flex;flex-direction:column;padding:20px 13px}
+.portal-name{display:flex;align-items:center;gap:10px;min-height:54px;padding:0 10px 17px;border-bottom:1px solid rgba(255,255,255,.12);color:#fff}
+.portal-name strong{min-width:0;font-size:14px;line-height:1.35}
+.portal-mark{width:34px;height:34px;display:grid;place-items:center;border-radius:9px;color:var(--navy);background:#fff;font-weight:800;letter-spacing:-.04em}
+.nav-caption{margin:19px 11px 8px;color:#7fa0b2;font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+.role-sidebar nav{position:static;display:grid;gap:6px}
+.sidebar-role-switch{display:grid;gap:5px;margin-top:auto;padding-top:22px;border-top:1px solid rgba(255,255,255,.12)}
+.sidebar-role-switch>small{margin:0 10px 4px;color:#7fa0b2;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+.sidebar-role-switch button{min-height:38px;font-size:11px}
+.sidebar-role-switch button.active{color:var(--navy);background:#fff;box-shadow:none}
+.sidebar-role-switch p{margin:10px 10px 0;color:#7898a9;font-size:9px}
+.worker-main{padding:0}
+.worker-main>.simple-page{padding:26px clamp(18px,3vw,42px) 46px}
+.list-section-title{min-height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 17px;border-bottom:1px solid var(--line);background:#f7f9fa}
+.list-section-title strong{font-size:14px}
+.list-section-title span{min-width:25px;height:25px;display:grid;place-items:center;border-radius:13px;color:var(--navy);background:#e4ecef;font-size:11px;font-weight:700}
+
+@media(max-width:1050px) and (min-width:761px){.topbar{grid-template-columns:1fr auto}.role-sidebar{padding-inline:9px}.portal-name strong,.nav-caption,.sidebar-role-switch button span,.sidebar-role-switch>small,.sidebar-role-switch p{display:none}.portal-name{justify-content:center;padding-inline:0}.sidebar-role-switch button{justify-content:center;padding:0}}
+@media(max-width:760px){.topbar>.role-switch{display:flex}.role-sidebar{position:sticky;top:108px;z-index:25;display:block;padding:7px 8px;background:var(--navy);overflow-x:auto}.portal-name,.nav-caption,.sidebar-role-switch{display:none}.role-sidebar nav{display:flex;min-width:max-content}.worker-main{padding:0}.worker-main>.simple-page{padding:18px 12px 34px}}
