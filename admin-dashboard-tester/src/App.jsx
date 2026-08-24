@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  Bell, Camera, CaretRight, Check, CheckCircle, ClipboardText, Clock, Cube,
-  Factory, Gear, ListChecks, MagnifyingGlass, MapPin, PaperPlaneTilt, Play, QrCode, Scan,
+  Bell, Camera, CaretRight, ChartBar, Check, CheckCircle, ClipboardText, Clock, Cube,
+  DownloadSimple, Factory, Gear, ListChecks, MagnifyingGlass, MapPin, PaperPlaneTilt, Play, QrCode, Scan,
   ShieldCheck, Timer, User, UserPlus, UsersThree, WarningCircle, Wrench, XCircle,
 } from "@phosphor-icons/react";
 import { copy } from "./i18n.js";
 
-const STORAGE_KEY = "m4-workflow-v2";
+const STORAGE_KEY = "m4-workflow-v3";
 const WAIT_LIMIT_MS = 10 * 60 * 1000;
 const machines = [
   { id:"M-12", nameKey:"pressMachine", line:"Line 2", station:"A-04" },
@@ -28,11 +28,23 @@ function seedTasks(base=Date.now()) {
     { id:"WO-260824-02",machineId:"M-03",machineKey:"motorStation",issueKey:"abnormalNoise",status:"repairing",reporter:"Nur Aina",location:"Line 1 · B-11",assignee:"Azlan",avatar:technicians[0].avatar,reportedAt:base-18*60_000,acceptedAt:base-11*60_000,repairStartedAt:base-8*60_000,photo:"",note:"" },
     { id:"WO-260824-03",machineId:"M-08",machineKey:"sensorStation",issueKey:"sensorFault",status:"acceptance",reporter:"Lim Wei",location:"Line 3 · C-02",assignee:"Mei Ling",avatar:technicians[1].avatar,reportedAt:base-32*60_000,acceptedAt:base-27*60_000,repairStartedAt:base-23*60_000,repairCompletedAt:base-3*60_000,result:{causeKey:"sensor",note:"Sensor connector cleaned and signal tested.",photo:""},photo:"",note:"" },
     { id:"WO-260824-04",machineId:"M-17",machineKey:"packingMachine",issueKey:"qualityIssue",status:"closed",reporter:"Siti Hana",location:"Line 1 · B-08",assignee:"Kumar",avatar:technicians[2].avatar,reportedAt:base-68*60_000,acceptedAt:base-62*60_000,repairStartedAt:base-58*60_000,repairCompletedAt:base-43*60_000,closedAt:base-39*60_000,result:{causeKey:"adjustment",note:"Guide rail aligned and sample output checked.",photo:""},photo:"",note:"" },
+    { id:"WO-260823-05",machineId:"M-12",machineKey:"pressMachine",issueKey:"abnormalNoise",status:"closed",reporter:"Lim Wei",location:"Line 2 · A-04",assignee:"Azlan",avatar:technicians[0].avatar,reportedAt:base-1*86_400_000,acceptedAt:base-1*86_400_000+6*60_000,repairStartedAt:base-1*86_400_000+9*60_000,repairCompletedAt:base-1*86_400_000+31*60_000,closedAt:base-1*86_400_000+36*60_000,result:{causeKey:"mechanical",note:"Bearing alignment corrected and tested.",photo:""},photo:"",note:"" },
+    { id:"WO-260821-06",machineId:"M-03",machineKey:"motorStation",issueKey:"cannotStart",status:"closed",reporter:"Nur Aina",location:"Line 1 · B-11",assignee:"Mei Ling",avatar:technicians[1].avatar,reportedAt:base-3*86_400_000,acceptedAt:base-3*86_400_000+4*60_000,repairStartedAt:base-3*86_400_000+7*60_000,repairCompletedAt:base-3*86_400_000+25*60_000,closedAt:base-3*86_400_000+29*60_000,result:{causeKey:"electrical",note:"Starter relay replaced and current checked.",photo:""},photo:"",note:"" },
+    { id:"WO-260818-07",machineId:"M-08",machineKey:"sensorStation",issueKey:"sensorFault",status:"closed",reporter:"Chen Hao",location:"Line 3 · C-02",assignee:"Kumar",avatar:technicians[2].avatar,reportedAt:base-6*86_400_000,acceptedAt:base-6*86_400_000+9*60_000,repairStartedAt:base-6*86_400_000+12*60_000,repairCompletedAt:base-6*86_400_000+41*60_000,closedAt:base-6*86_400_000+47*60_000,result:{causeKey:"sensor",note:"Proximity sensor replaced and calibrated.",photo:""},photo:"",note:"" },
+    { id:"WO-260810-08",machineId:"M-17",machineKey:"packingMachine",issueKey:"qualityIssue",status:"closed",reporter:"Siti Hana",location:"Line 1 · B-08",assignee:"Azlan",avatar:technicians[0].avatar,reportedAt:base-14*86_400_000,acceptedAt:base-14*86_400_000+5*60_000,repairStartedAt:base-14*86_400_000+8*60_000,repairCompletedAt:base-14*86_400_000+20*60_000,closedAt:base-14*86_400_000+24*60_000,result:{causeKey:"adjustment",note:"Seal temperature and guide pressure adjusted.",photo:""},photo:"",note:"" },
+    { id:"WO-260730-09",machineId:"M-12",machineKey:"pressMachine",issueKey:"cannotStart",status:"closed",reporter:"Lim Wei",location:"Line 2 · A-04",assignee:"Mei Ling",avatar:technicians[1].avatar,reportedAt:base-25*86_400_000,acceptedAt:base-25*86_400_000+7*60_000,repairStartedAt:base-25*86_400_000+10*60_000,repairCompletedAt:base-25*86_400_000+44*60_000,closedAt:base-25*86_400_000+50*60_000,result:{causeKey:"electrical",note:"Safety interlock circuit repaired.",photo:""},photo:"",note:"" },
   ];
 }
 function readTasks(){try{const data=JSON.parse(localStorage.getItem(STORAGE_KEY));return Array.isArray(data)&&data.length?data:seedTasks();}catch{return seedTasks();}}
 function clock(value,lang){if(!value)return "—";return new Intl.DateTimeFormat(lang==="zh"?"zh-CN":lang==="bm"?"ms-MY":"en-MY",{hour:"2-digit",minute:"2-digit"}).format(value);}
 function duration(start,end,lang){if(!start)return "—";const seconds=Math.max(0,Math.floor(((end||Date.now())-start)/1000));const mins=Math.floor(seconds/60);const secs=seconds%60;return lang==="zh"?`${mins}分 ${secs}秒`:`${mins}m ${secs}s`;}
+function minutesBetween(start,end){return start&&end?Math.max(0,(end-start)/60_000):null;}
+function average(values){const valid=values.filter(value=>Number.isFinite(value));return valid.length?valid.reduce((sum,value)=>sum+value,0)/valid.length:0;}
+function formatMinutes(value,lang){const rounded=Math.round(value||0);return lang==="zh"?`${rounded} 分钟`:`${rounded} min`;}
+function percentage(value,total){return total?Math.round(value/total*100):0;}
+function periodTasks(tasks,period,now){const days=period==="weekly"?7:30;return tasks.filter(task=>task.reportedAt>=now-days*86_400_000);}
+function technicianStats(tasks){return technicians.map(tech=>{const assigned=tasks.filter(task=>task.assignee===tech.name);const completed=assigned.filter(task=>task.repairCompletedAt);return {...tech,accepted:assigned.length,completed:completed.length,active:assigned.filter(task=>["assigned","repairing"].includes(task.status)).length,avgResponse:average(assigned.map(task=>minutesBetween(task.reportedAt,task.acceptedAt))),avgRepair:average(completed.map(task=>minutesBetween(task.repairStartedAt,task.repairCompletedAt))),completion:percentage(completed.length,assigned.length)};});}
+function groupedStats(tasks,keyGetter){const keys=tasks.map(keyGetter).filter(Boolean);const map=new Map();keys.forEach(key=>map.set(key,(map.get(key)||0)+1));return [...map.entries()].map(([key,count])=>({key,count,share:percentage(count,keys.length)})).sort((a,b)=>b.count-a.count);}
 function statusKey(status){return {reported:"statusReported",assigned:"statusAssigned",repairing:"statusRepairing",acceptance:"statusAcceptance",closed:"statusClosed"}[status];}
 function StatusIcon({status,size=18}){if(status==="reported")return <WarningCircle size={size}/>;if(status==="assigned")return <UserPlus size={size}/>;if(status==="repairing")return <Wrench size={size}/>;return <CheckCircle size={size}/>;}
 function StatusBadge({task,t}){return <span className={`status-badge ${task.status}`}><StatusIcon status={task.status} size={16}/>{t(statusKey(task.status))}</span>;}
@@ -87,7 +99,7 @@ function PageHeading({title,sub,live,t}){return <div className="page-heading"><d
 
 function PortalSidebar({role,section,setSection,setRole,t}){
   const configs={
-    admin:{title:"adminPortal",items:[["live","navLive",ClipboardText],["orders","navOrders",ListChecks],["equipment","navEquipment",Cube],["team","navTeam",UsersThree],["settings","navSettings",Gear]]},
+    admin:{title:"adminPortal",items:[["live","navLive",ClipboardText],["history","navHistory",ListChecks],["reports","navReports",ChartBar],["people","navPeopleAnalysis",UsersThree],["faults","navFaultAnalysis",WarningCircle],["equipment","navEquipment",Cube],["settings","navSettings",Gear]]},
     operator:{title:"operatorPortal",items:[["report","navReport",PaperPlaneTilt],["current","navCurrent",ClipboardText],["history","navHistory",ListChecks],["equipment","navEquipment",Cube],["settings","navSettings",Gear]]},
     technician:{title:"technicianPortal",items:[["available","navAvailable",UsersThree],["current","navCurrent",Wrench],["history","navHistory",ListChecks],["equipment","navEquipment",Cube],["settings","navSettings",Gear]]},
   };
@@ -103,16 +115,55 @@ function WorkerOrdersPage({items,title,t,lang,now,emptyHint,focusTaskId}){
   return <main className="simple-page worker-orders-page"><PageHeading title={title} sub={t("adminSub")}/><section className="workspace"><div className="workspace-head"><div><ClipboardText size={22}/><h2>{title}</h2><span>{items.length}</span></div></div><div className="workspace-grid"><TaskList tasks={items} selectedId={selected?.id} onSelect={setSelectedId} t={t} lang={lang} now={now} emptyHint={emptyHint}/><TaskDetail task={selected} now={now} t={t} lang={lang} showFallback={false}/></div></section></main>;
 }
 
+function HistoryOrdersPage({tasks,t,lang,now,focusTaskId}){
+  const [query,setQuery]=useState(""),[tech,setTech]=useState("all"),[range,setRange]=useState("all"),[selectedId,setSelectedId]=useState(focusTaskId||"");
+  const history=tasks.filter(task=>task.status==="closed").filter(task=>range==="all"||task.reportedAt>=now-(range==="week"?7:30)*86_400_000).filter(task=>tech==="all"||task.assignee===tech).filter(task=>`${task.id} ${task.machineId} ${t(task.machineKey)} ${t(task.issueKey)} ${task.assignee||""}`.toLowerCase().includes(query.toLowerCase())).sort((a,b)=>b.closedAt-a.closedAt);
+  const selected=history.find(task=>task.id===selectedId)||history[0];
+  useEffect(()=>{if(focusTaskId&&history.some(task=>task.id===focusTaskId))setSelectedId(focusTaskId);},[focusTaskId,history]);
+  return <main className="simple-page history-page"><PageHeading title={t("historyTitle")} sub={t("reportsSub")}/><div className="history-filters"><label><MagnifyingGlass size={18}/><input value={query} onChange={event=>setQuery(event.target.value)} placeholder={t("historySearch")}/></label><select value={tech} onChange={event=>setTech(event.target.value)}><option value="all">{t("allTechnicians")}</option>{technicians.map(item=><option key={item.name}>{item.name}</option>)}</select><select value={range} onChange={event=>setRange(event.target.value)}><option value="all">{t("allPeriods")}</option><option value="week">{t("last7Days")}</option><option value="month">{t("last30Days")}</option></select></div><section className="workspace history-workspace"><div className="workspace-head"><div><ListChecks size={22}/><h2>{t("historyTitle")}</h2><span>{history.length}</span></div></div><div className="workspace-grid"><TaskList tasks={history} selectedId={selected?.id} onSelect={setSelectedId} t={t} lang={lang} now={now} emptyHint={t("emptyHistory")}/><TaskDetail task={selected} now={now} t={t} lang={lang} showFallback={false}/></div></section></main>;
+}
+
+function PeopleAnalysis({tasks,t,lang,compact=false}){
+  const rows=technicianStats(tasks);
+  return <section className={`analysis-card people-analysis ${compact?"compact":""}`}><header><div><UsersThree size={23}/><span><h2>{t("personnelAnalysisTitle")}</h2><p>{t("personnelAnalysisSub")}</p></span></div></header><div className="analysis-table"><div className="analysis-table-head"><span>{t("technician")}</span><span>{t("acceptedOrders")}</span><span>{t("avgClaim")}</span><span>{t("avgFix")}</span><span>{t("completion")}</span><span>{t("taskLoad")}</span></div>{rows.map(row=><div className="analysis-table-row" key={row.name}><span className="person-cell"><img src={row.avatar} alt=""/><b>{row.name}</b></span><strong>{row.accepted}</strong><span>{formatMinutes(row.avgResponse,lang)}</span><span>{formatMinutes(row.avgRepair,lang)}</span><span><b>{row.completion}%</b><i className="micro-bar"><em style={{width:`${row.completion}%`}}/></i></span><strong className={row.active?"warning-text":"ok-text"}>{row.active}</strong></div>)}</div></section>;
+}
+
+function FaultAnalysis({tasks,t,compact=false}){
+  const machinesData=groupedStats(tasks,task=>task.machineId);
+  const issueData=groupedStats(tasks,task=>task.issueKey);
+  const causeData=groupedStats(tasks,task=>task.result?.causeKey);
+  const machineName=id=>{const machine=machines.find(item=>item.id===id);return machine?`${id} · ${t(machine.nameKey)}`:id;};
+  return <section className={`analysis-card fault-analysis ${compact?"compact":""}`}><header><div><WarningCircle size={23}/><span><h2>{t("faultAnalysisTitle")}</h2><p>{t("faultAnalysisSub")}</p></span></div></header><div className="fault-columns"><div><h3>{t("machineFaultRate")}</h3>{machinesData.map(item=><div className="breakdown-row" key={item.key}><span><b>{machineName(item.key)}</b><small>{item.count} · {item.share}%</small></span><i><em style={{width:`${item.share}%`}}/></i></div>)}</div><div><h3>{t("faultCauses")}</h3>{causeData.map(item=><div className="cause-row" key={item.key}><span>{t(item.key)}</span><b>{item.count}</b><small>{item.share}%</small></div>)}{!causeData.length&&<div className="search-empty">—</div>}</div>{!compact&&<div><h3>{t("faultTypeBreakdown")}</h3>{issueData.map(item=><div className="cause-row" key={item.key}><span>{t(item.key)}</span><b>{item.count}</b><small>{item.share}%</small></div>)}</div>}</div></section>;
+}
+
+function ReportPage({tasks,t,lang,now}){
+  const [period,setPeriod]=useState("weekly");
+  const data=periodTasks(tasks,period,now);
+  const completed=data.filter(task=>task.repairCompletedAt);
+  const techRows=technicianStats(data);
+  const machinesData=groupedStats(data,task=>task.machineId);
+  const causesData=groupedStats(data,task=>task.result?.causeKey);
+  const metrics=[
+    ["totalOrders",data.length,ClipboardText],["closedOrders",data.filter(task=>task.status==="closed").length,CheckCircle],
+    ["closureRate",`${percentage(data.filter(task=>task.status==="closed").length,data.length)}%`,ChartBar],
+    ["avgResponse",formatMinutes(average(data.map(task=>minutesBetween(task.reportedAt,task.acceptedAt))),lang),Clock],
+    ["avgRepair",formatMinutes(average(completed.map(task=>minutesBetween(task.repairStartedAt,task.repairCompletedAt))),lang),Wrench],
+  ];
+  const exportCsv=()=>{const rows=[[t("reportedDate"),t("orderId"),t("machine"),t("fault"),t("technician"),t("orderStatus"),t("avgResponse"),t("avgRepair")],...data.map(task=>[new Date(task.reportedAt).toISOString(),task.id,`${task.machineId} ${t(task.machineKey)}`,t(task.issueKey),task.assignee||"",t(statusKey(task.status)),Math.round(minutesBetween(task.reportedAt,task.acceptedAt)||0),Math.round(minutesBetween(task.repairStartedAt,task.repairCompletedAt)||0)])];const csv="\uFEFF"+rows.map(row=>row.map(value=>`"${String(value).replaceAll('"','""')}"`).join(",")).join("\r\n");const url=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));const link=document.createElement("a");link.href=url;link.download=`M4-${period}-${new Date(now).toISOString().slice(0,10)}.csv`;link.style.display="none";document.body.appendChild(link);link.click();link.remove();window.setTimeout(()=>URL.revokeObjectURL(url),1000);};
+  return <main className="simple-page report-page"><div className="page-heading report-heading"><div><h1>{t("reportsTitle")}</h1><p>{t("reportsSub")}</p></div><div className="report-actions"><div className="segmented"><button className={period==="weekly"?"active":""} onClick={()=>setPeriod("weekly")}>{t("weekly")}</button><button className={period==="monthly"?"active":""} onClick={()=>setPeriod("monthly")}>{t("monthly")}</button></div><button className="export-report" onClick={exportCsv}><DownloadSimple size={19}/>{t("exportCsv")}</button></div></div><section className="report-metrics">{metrics.map(([key,value,Icon])=><article key={key}><Icon size={23}/><span>{t(key)}</span><strong>{value}</strong></article>)}</section><PeopleAnalysis tasks={data} t={t} lang={lang}/><section className="report-split"><div className="analysis-card"><header><div><Factory size={23}/><span><h2>{t("machineFaultRate")}</h2><p>{t("machineBreakdown")}</p></span></div></header>{machinesData.map(item=><div className="report-breakdown" key={item.key}><span>{item.key}</span><i><em style={{width:`${item.share}%`}}/></i><strong>{item.count}</strong><small>{item.share}%</small></div>)}</div><div className="analysis-card"><header><div><WarningCircle size={23}/><span><h2>{t("faultCauses")}</h2><p>{t("faultTypeBreakdown")}</p></span></div></header>{causesData.map(item=><div className="report-breakdown" key={item.key}><span>{t(item.key)}</span><i><em style={{width:`${item.share}%`}}/></i><strong>{item.count}</strong><small>{item.share}%</small></div>)}</div></section></main>;
+}
+
+function DashboardInsights({tasks,t,lang}){return <div className="dashboard-insights"><PeopleAnalysis tasks={tasks} t={t} lang={lang} compact/><FaultAnalysis tasks={tasks} t={t} compact/></div>;}
+
 function AdminApp({tasks,setTasks,now,t,lang,notify,setLang,section,setSection,setRole,focusTaskId}){
-  const [filter,setFilter]=useState("open");
-  const filtered=useMemo(()=>tasks.filter(task=>filter==="all"||(filter==="open"?task.status!=="closed":task.status==="closed")),[tasks,filter]);
-  const [selectedId,setSelectedId]=useState(filtered[0]?.id);const selected=filtered.find(x=>x.id===selectedId)||filtered[0];
-  useEffect(()=>{if(filtered.length&&!filtered.some(x=>x.id===selectedId))setSelectedId(filtered[0].id);},[filtered,selectedId]);
-  useEffect(()=>{if(focusTaskId&&filtered.some(task=>task.id===focusTaskId))setSelectedId(focusTaskId);},[focusTaskId,filtered]);
+  const activeTasks=useMemo(()=>tasks.filter(task=>task.status!=="closed"),[tasks]);
+  const [selectedId,setSelectedId]=useState(activeTasks[0]?.id);const selected=activeTasks.find(x=>x.id===selectedId)||activeTasks[0];
+  useEffect(()=>{if(activeTasks.length&&!activeTasks.some(x=>x.id===selectedId))setSelectedId(activeTasks[0].id);},[activeTasks,selectedId]);
+  useEffect(()=>{if(focusTaskId&&activeTasks.some(task=>task.id===focusTaskId))setSelectedId(focusTaskId);},[focusTaskId,activeTasks]);
   const fallback=(id,tech)=>{setTasks(current=>current.map(task=>task.id===id&&task.status==="reported"?{...task,status:"assigned",assignee:tech.name,avatar:tech.avatar,acceptedAt:Date.now(),assignedByAdmin:true}:task));notify(`${t("assignedTo")} ${tech.name}`);};
   const metrics=[["activeOrders",tasks.filter(x=>x.status!=="closed").length,ClipboardText],["waitingClaim",tasks.filter(x=>x.status==="reported").length,Clock],["repairing",tasks.filter(x=>["assigned","repairing"].includes(x.status)).length,Wrench],["waitingAccept",tasks.filter(x=>x.status==="acceptance").length,CheckCircle]];
   return <div className="role-layout"><PortalSidebar role="admin" section={section} setSection={setSection} setRole={setRole} t={t}/><main className="role-main">
-    {section==="settings"?<Settings t={t} lang={lang} setLang={setLang} onReset={()=>{const next=seedTasks();setTasks(next);notify(t("resetDone"));}}/>:section==="equipment"?<EquipmentView tasks={tasks} t={t}/>:section==="team"?<TeamView tasks={tasks} t={t}/>:<><PageHeading title={t("adminTitle")} sub={t("adminSub")} live t={t}/><section className="metric-strip">{metrics.map(([key,value,Icon])=><div className="metric" key={key}><Icon size={27}/><span>{t(key)}</span><strong>{value}</strong></div>)}</section><section className="workspace"><div className="workspace-head"><div><Wrench size={22}/><h2>{section==="orders"?t("navOrders"):t("currentOrders")}</h2><span>{filtered.length}</span></div><div className="segmented">{["all","open","closed"].map(key=><button key={key} className={filter===key?"active":""} onClick={()=>setFilter(key)}>{t(key)}</button>)}</div></div><div className="workspace-grid"><TaskList tasks={filtered} selectedId={selected?.id} onSelect={setSelectedId} t={t} lang={lang} now={now}/><TaskDetail task={selected} now={now} t={t} lang={lang} onFallbackAssign={fallback}/></div></section></>}
+    {section==="settings"?<Settings t={t} lang={lang} setLang={setLang} onReset={()=>{const next=seedTasks();setTasks(next);notify(t("resetDone"));}}/>:section==="equipment"?<EquipmentView tasks={tasks} t={t}/>:section==="history"?<HistoryOrdersPage tasks={tasks} t={t} lang={lang} now={now} focusTaskId={focusTaskId}/>:section==="reports"?<ReportPage tasks={tasks} t={t} lang={lang} now={now}/>:section==="people"?<main className="simple-page analysis-page"><PageHeading title={t("personnelAnalysisTitle")} sub={t("personnelAnalysisSub")}/><PeopleAnalysis tasks={tasks} t={t} lang={lang}/></main>:section==="faults"?<main className="simple-page analysis-page"><PageHeading title={t("faultAnalysisTitle")} sub={t("faultAnalysisSub")}/><FaultAnalysis tasks={tasks} t={t}/></main>:<><PageHeading title={t("adminTitle")} sub={t("adminSub")} live t={t}/><section className="metric-strip">{metrics.map(([key,value,Icon])=><div className="metric" key={key}><Icon size={27}/><span>{t(key)}</span><strong>{value}</strong></div>)}</section><section className="workspace"><div className="workspace-head"><div><Wrench size={22}/><h2>{t("currentOrders")}</h2><span>{activeTasks.length}</span></div></div><div className="workspace-grid"><TaskList tasks={activeTasks} selectedId={selected?.id} onSelect={setSelectedId} t={t} lang={lang} now={now}/><TaskDetail task={selected} now={now} t={t} lang={lang} onFallbackAssign={fallback}/></div></section><DashboardInsights tasks={tasks} t={t} lang={lang}/></>}
   </main></div>;
 }
 
@@ -155,7 +206,7 @@ export function App(){
   const notify=message=>{setToast(message);clearTimeout(window.__m4ToastTimer);window.__m4ToastTimer=setTimeout(()=>setToast(""),3000);};
   const section=sections[role];
   const setSection=next=>setSections(current=>({...current,[role]:next}));
-  const openSearchTask=task=>{setFocusTaskId(task.id);const target=role==="admin"?(task.status==="closed"?"orders":"live"):role==="operator"?(task.status==="closed"?"history":"current"):(task.status==="closed"?"history":task.status==="reported"?"available":"current");setSections(current=>({...current,[role]:target}));};
+  const openSearchTask=task=>{setFocusTaskId(task.id);const target=role==="admin"?(task.status==="closed"?"history":"live"):role==="operator"?(task.status==="closed"?"history":"current"):(task.status==="closed"?"history":task.status==="reported"?"available":"current");setSections(current=>({...current,[role]:target}));};
   const workerContent=role==="operator"?<OperatorApp tasks={tasks} setTasks={setTasks} now={now} t={t} lang={lang} notify={notify} section={section} setLang={setLang} focusTaskId={focusTaskId}/>:<TechnicianApp tasks={tasks} setTasks={setTasks} now={now} t={t} lang={lang} notify={notify} section={section} setSection={setSection} setLang={setLang} focusTaskId={focusTaskId}/>;
   return <div className="app-shell"><Header role={role} setRole={setRole} lang={lang} setLang={setLang} t={t} tasks={tasks} onSearchNavigate={openSearchTask}/>{role==="admin"?<AdminApp tasks={tasks} setTasks={setTasks} now={now} t={t} lang={lang} notify={notify} setLang={setLang} section={section} setSection={setSection} setRole={setRole} focusTaskId={focusTaskId}/>:<div className="role-layout"><PortalSidebar role={role} section={section} setSection={setSection} setRole={setRole} t={t}/><div className="role-main worker-main">{workerContent}</div></div>}{toast&&<div className="toast" role="status"><CheckCircle size={19} weight="fill"/>{toast}</div>}</div>;
 }
