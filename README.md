@@ -4,7 +4,15 @@
 
 ## Cloudflare Workers 部署
 
-仓库根目录的 `wrangler.jsonc` 会把 `admin-dashboard-tester/dist/client` 作为线上静态资源目录，并为前端路由启用 SPA 回退。生产构建文件会一并提交到仓库，因此 Cloudflare 使用默认部署命令 `npx wrangler deploy` 即可发布，不依赖控制台里的额外构建命令。
+仓库根目录的 `wrangler.jsonc` 会把 `admin-dashboard-tester/dist/client` 作为线上静态资源目录，并由 Worker 处理前端路由和文件接口。生产构建文件会一并提交到仓库，因此 Cloudflare 使用默认部署命令 `npx wrangler deploy` 即可发布，不依赖控制台里的额外构建命令。
+
+## 文件存储架构
+
+- 设备现场照片、维修结果照片等文件存入独立的 Cloudflare R2 对象存储。
+- 工单记录只保存 `/api/files/...` 文件链接和轻量信息，不保存 Base64 或文件内容。
+- 文件通过同域 Worker 接口读取，R2 存储桶无需公开。
+- 上传失败时不会写入无照片的工单，操作人员可直接重新选择并上传。
+- 首次部署时 Wrangler 会根据 `UPLOADS` 绑定自动创建并连接专用 R2 存储区。
 
 更新页面后，在本地重新生成生产文件：
 

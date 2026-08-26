@@ -16,3 +16,4 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 - The administrator should land in an exception center that prioritizes unclaimed, repair-overdue, acceptance-overdue, and suspected-repeat faults.
 - Visible evidence, SLA state, correct pending-step language, and recent equipment maintenance history are higher priority than adding more dashboard charts.
 - Keep the interface simple, multilingual-ready, icon-led, responsive, and suitable for Malaysian advanced-manufacturing teams.
+- Store uploaded photos and other large files in dedicated object storage. Work-order records must contain only file URLs and lightweight metadata, never Base64 or other embedded file payloads.
