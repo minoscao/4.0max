@@ -212,7 +212,7 @@ function MobileMenu({open,role,section,setSection,setRole,onClose,t,alertCount=0
 function PersistentActionBar({actions,t,className=""}){
   const visible=actions.filter(Boolean);
   if(!visible.length)return null;
-  return <aside className={`persistent-action-bar ${className}`} aria-label={t("quickActions")}><div><span className="action-context"><b>{t("quickActions")}</b><small>{visible.find(action=>action.primary)?.label||visible[0].label}</small></span><div className="action-buttons">{visible.map(({key,label,Icon,onClick,primary=false,danger=false,disabled=false})=><button key={key} className={`${primary?"primary":""} ${danger?"danger":""}`} onClick={onClick} disabled={disabled}><Icon size={21}/><span>{label}</span></button>)}</div></div></aside>;
+  return <aside className={`persistent-action-bar ${visible.length===1?"single-action":""} ${className}`} aria-label={t("quickActions")}><div><span className="action-context"><b>{t("quickActions")}</b><small>{visible.find(action=>action.primary)?.label||visible[0].label}</small></span><div className="action-buttons">{visible.map(({key,label,Icon,onClick,primary=false,danger=false,disabled=false})=><button key={key} className={`${primary?"primary":""} ${danger?"danger":""}`} onClick={onClick} disabled={disabled}><Icon size={21}/><span>{label}</span></button>)}</div></div></aside>;
 }
 
 function WorkerOrdersPage({items,title,t,lang,now,emptyHint,focusTaskId,onAccept,onReject,actionFactory}){
