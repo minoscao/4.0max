@@ -10,6 +10,8 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 
 ## Confirmed Product Decisions
 
+- After every requested project change, verify it, commit it, and push it directly to `origin/main` unless the user explicitly asks not to sync that change.
+
 - Use `../交付文档/M4-维修异常中心-优化概念图-v1.png` as the current visual source of truth for the administrator landing view. The older V4 dashboard remains the source for the general work-order view.
 - The primary workspace is a compact List → Detail experience: current tasks on the left, selected task detail and action on the right.
 - Current tasks must be clearly separated from summary metrics and supporting analytics.
