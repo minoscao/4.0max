@@ -28,6 +28,12 @@ const problemReportCopy={
   bm:{problemReportTitle:"Laporan masalah",problemReportHint:"Terangkan masalah dan muat naik gambar lokasi. Laporan akan disimpan dalam rekod tiket untuk tindakan pentadbir.",problemReason:"Penerangan masalah (wajib)",problemReasonPlaceholder:"Contoh: ID mesin tidak sepadan atau risiko keselamatan menghalang pembaikan",problemPhoto:"Gambar masalah (wajib)",problemPhotoHint:"Ambil gambar lokasi atau pilih dari telefon／komputer",confirmProblemReport:"Hantar laporan",cancelProblemReport:"Batal"}
 };
 Object.entries(problemReportCopy).forEach(([lang,labels])=>Object.assign(copy[lang],labels));
+const transferReasonCopy={
+  zh:{transferReason:"转单理由（必填）",transferReasonPlaceholder:"例如：临时处理更紧急的停机任务，请 Mei Ling 接手后续维修",confirmTransfer:"确认转单",transferSelected:"已选择",transferReasonHint:"请选择接手工程师并填写转单理由。确认后将完整记录在工单历史中。"},
+  en:{transferReason:"Transfer reason (required)",transferReasonPlaceholder:"Example: I need to handle a more urgent line stoppage; Mei Ling will continue this repair",confirmTransfer:"Confirm transfer",transferSelected:"Selected",transferReasonHint:"Choose the receiving technician and enter a reason. The full transfer will be kept in the work-order history."},
+  bm:{transferReason:"Sebab pindah tugas (wajib)",transferReasonPlaceholder:"Contoh: Saya perlu menangani mesin lain yang lebih kritikal; Mei Ling akan meneruskan pembaikan",confirmTransfer:"Sahkan pindah",transferSelected:"Dipilih",transferReasonHint:"Pilih juruteknik penerima dan isi sebab. Rekod lengkap akan disimpan dalam sejarah tiket."}
+};
+Object.entries(transferReasonCopy).forEach(([lang,labels])=>Object.assign(copy[lang],labels));
 const machines = [
   { id:"M-12", nameKey:"pressMachine", line:"Line 2", station:"A-04" },
   { id:"M-03", nameKey:"motorStation", line:"Line 1", station:"B-11" },
@@ -197,7 +203,7 @@ function ExceptionCenter({tasks,setTasks,now,t,lang,notify,setSection,focusTaskI
 }
 
 function OrderActivity({task,now,t,lang}){
-  const transferEvents=(task.transfers||[]).map(item=>[item.at,item.from,`${t("eventTransferred")} ${item.to}`,ArrowsLeftRight]);
+  const transferEvents=(task.transfers||[]).map(item=>[item.at,item.from,`${t("eventTransferred")} ${item.to}`,ArrowsLeftRight,{note:item.reason}]);
   const alertEvents=(task.alerts||[]).map(item=>[item.at,item.by,t("eventProblem"),WarningCircle,item]);
   const events=[
     [task.reportedAt,task.reporter,t("eventReported"),ClipboardText],
@@ -330,10 +336,13 @@ function ProblemReportDialog({task,onSubmit,onCancel,notify,t}){
 }
 
 function TransferDialog({task,tasks,onTransfer,onClose,t}){
+  const [reason,setReason]=useState(""),[selectedName,setSelectedName]=useState("");
   useEffect(()=>{if(!task)return;const close=event=>event.key==="Escape"&&onClose();document.addEventListener("keydown",close);return()=>document.removeEventListener("keydown",close);},[task,onClose]);
+  useEffect(()=>{if(task){setReason("");setSelectedName("");}},[task?.id]);
   if(!task)return null;
   const options=technicians.filter(tech=>tech.name!==task.assignee);
-  return <div className="transfer-backdrop" onMouseDown={event=>event.target===event.currentTarget&&onClose()}><section className="transfer-dialog" role="dialog" aria-modal="true" aria-label={t("transferTitle")}><header><span><ArrowsLeftRight size={23}/></span><div><h2>{t("transferTitle")}</h2><p>{task.id} · {task.machineId}</p></div><button onClick={onClose} aria-label={t("cancel")}><XCircle size={24}/></button></header><div className="transfer-copy"><strong>{t("transferHint")}</strong><p>{t("transferAuditHint")}</p></div><div className="transfer-options">{options.map(tech=>{const workload=tasks.filter(item=>item.assignee===tech.name&&["assigned","repairing"].includes(item.status)).length;return <button key={tech.name} onClick={()=>onTransfer(tech)}><img src={tech.avatar} alt=""/><span><strong>{tech.name}</strong><small>{workload?`${t("taskLoad")} · ${workload}`:t("teamAvailable")}</small></span><b>{t("transferTo")}</b><CaretRight size={16}/></button>;})}</div><footer><button onClick={onClose}>{t("cancel")}</button></footer></section></div>;
+  const selected=options.find(tech=>tech.name===selectedName);
+  return <div className="transfer-backdrop" onMouseDown={event=>event.target===event.currentTarget&&onClose()}><section className="transfer-dialog" role="dialog" aria-modal="true" aria-label={t("transferTitle")}><header><span><ArrowsLeftRight size={23}/></span><div><h2>{t("transferTitle")}</h2><p>{task.id} · {task.machineId}</p></div><button onClick={onClose} aria-label={t("cancel")}><XCircle size={24}/></button></header><div className="transfer-copy"><strong>{t("transferHint")}</strong><p>{t("transferReasonHint")}</p></div><div className="transfer-options">{options.map(tech=>{const workload=tasks.filter(item=>item.assignee===tech.name&&["assigned","repairing"].includes(item.status)).length,active=selectedName===tech.name;return <button key={tech.name} className={active?"selected":""} aria-pressed={active} onClick={()=>setSelectedName(tech.name)}><img src={tech.avatar} alt=""/><span><strong>{tech.name}</strong><small>{workload?`${t("taskLoad")} · ${workload}`:t("teamAvailable")}</small></span><b>{active?t("transferSelected"):t("transferTo")}</b>{active?<Check size={17} weight="bold"/>:<CaretRight size={16}/>}</button>;})}</div><label className="transfer-reason"><span>{t("transferReason")}</span><textarea value={reason} onChange={event=>setReason(event.target.value)} placeholder={t("transferReasonPlaceholder")} maxLength={300}/></label><footer><button className="transfer-cancel" onClick={onClose}><XCircle size={19}/>{t("cancel")}</button><button className="transfer-confirm" onClick={()=>onTransfer(selected,reason.trim())} disabled={!selected||!reason.trim()}><CheckCircle size={19} weight="fill"/>{t("confirmTransfer")}</button></footer></section></div>;
 }
 
 function ActionConfirmDialog({open,title,description,context,Icon,confirmLabel,cancelLabel,onConfirm,onCancel,extraAction,confirmDisabled=false,children,t}){
@@ -383,7 +392,7 @@ function TechnicianApp({tasks,setTasks,now,updatedAt,t,lang,notify,section,setSe
   const claim=id=>{setConfirmClaimId("");const current=tasks.find(task=>task.id===id);if(!current||current.status!=="reported")return notify(t("alreadyClaimed"));setTasks(items=>items.map(task=>task.id===id?{...task,status:"assigned",assignee:me.name,acceptedBy:me.name,avatar:me.avatar,acceptedAt:Date.now()}:task));setSelectedId("");setSection("current");notify(t("claimedSuccess"));};
   const start=id=>{setTasks(current=>current.map(task=>task.id===id&&task.status==="assigned"?{...task,status:"repairing",repairStartedAt:Date.now()}:task));notify(t("startedSuccess"));};
   const finish=id=>{if(!cause||!note.trim()||!photo)return notify(t("resultRequired"));const at=Date.now();setConfirmFinishId("");setTasks(current=>current.map(task=>{if(task.id!==id||task.status!=="repairing")return task;const history=repairHistoryFor(task),round=history.filter(event=>event.type==="repair").length+1,result={causeKey:cause,note:note.trim(),photo,photos:[photo]};return {...task,status:"acceptance",repairCompletedAt:at,result,repairHistory:[...history,{type:"repair",round,at,by:me.name,...result}]};}));setCause("");setNote("");setPhoto("");notify(t("handoverSuccess"));};
-  const transfer=tech=>{const task=tasks.find(item=>item.id===transferTaskId);if(!task||task.assignee!==me.name||!["assigned","repairing"].includes(task.status)){setTransferTaskId("");return notify(t("transferUnavailable"));}const at=Date.now();setTasks(current=>current.map(item=>item.id===task.id?{...item,acceptedBy:item.acceptedBy||me.name,assignee:tech.name,avatar:tech.avatar,transfers:[...(item.transfers||[]),{from:me.name,to:tech.name,at}]}:item));setTransferTaskId("");setSelectedId("");notify(`${t("transferSuccess")} ${tech.name}`);};
+  const transfer=(tech,reason)=>{const task=tasks.find(item=>item.id===transferTaskId);if(!task||!tech||!reason?.trim()||task.assignee!==me.name||!["assigned","repairing"].includes(task.status)){if(task&&(!tech||!reason?.trim()))return;setTransferTaskId("");return notify(t("transferUnavailable"));}const at=Date.now();setTasks(current=>current.map(item=>item.id===task.id?{...item,acceptedBy:item.acceptedBy||me.name,assignee:tech.name,avatar:tech.avatar,transfers:[...(item.transfers||[]),{from:me.name,to:tech.name,at,reason:reason.trim()}]}:item));setTransferTaskId("");setSelectedId("");notify(`${t("transferSuccess")} ${tech.name}`);};
   const openProblemReport=task=>task?setProblemTaskId(task.id):notify(t("selectOrderFirst"));
   const reportProblem=(task,problemNote,problemPhoto)=>{if(!task||!problemNote||!problemPhoto)return;setTasks(current=>current.map(item=>item.id===task.id?{...item,alerts:[...(item.alerts||[]),{by:me.name,at:Date.now(),note:problemNote,photo:problemPhoto,photos:[problemPhoto]}]}:item));setProblemTaskId("");notify(t("problemReported"));};
   const navigationActions=[{key:"available",label:t("navAvailable"),Icon:UsersThree,onClick:()=>setSection("available")},{key:"current",label:t("navCurrent"),Icon:Wrench,onClick:()=>setSection("current"),primary:true}];
