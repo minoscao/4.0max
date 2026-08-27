@@ -17,3 +17,5 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 - Visible evidence, SLA state, correct pending-step language, and recent equipment maintenance history are higher priority than adding more dashboard charts.
 - Keep the interface simple, multilingual-ready, icon-led, responsive, and suitable for Malaysian advanced-manufacturing teams.
 - Store uploaded photos and other large files in dedicated object storage. Work-order records must contain only file URLs and lightweight metadata, never Base64 or other embedded file payloads.
+- Operator acceptance, operator rework, and technician repair completion are protected actions that require a second confirmation. Rework requires a new photo and description, and every repair/rework round remains visible in the work-order history.
+- Operator and technician List → Detail pages must start with no selected task; task details and task-specific actions appear only after the worker deliberately selects a work order.
